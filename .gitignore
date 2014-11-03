@@ -1,0 +1,9 @@
+*.obj
+*.suo
+*.sdf
+*.opensdf
+
+Release/
+Debug/
+
+studio/*
