@@ -1,10 +1,8 @@
 #include "cSourceFile.h"
 
-cSourceFile::cSourceFile(CHAR* Filename): cFile(Filename)
-{
+cSourceFile::cSourceFile(CHAR* Filename): cFile(Filename) {
     isReady = FALSE;
-    if (BaseAddress)
-    {
+    if (BaseAddress) {
         SplitWords();
         ConstructOpTable();
     }
@@ -76,12 +74,10 @@ void cSourceFile::ConstructOpTable()
 void cSourceFile::SplitWords()
 {
     UINT StartPtr=0;
-    for (UINT i=0; i<FileLength; i++)
-    {
+    for (UINT i = 0; i < FileLength; i++) {
         if (!isascii(((CHAR*)BaseAddress)[i]))
             return;
-        else if(((CHAR*)BaseAddress)[i] == '.')
-        {
+        else if(((CHAR*)BaseAddress)[i] == '.') {
             StartPtr = i;
             for (i; i<FileLength; i++)
                 if ((i+1 == FileLength && i+StartPtr) || 
@@ -93,8 +89,7 @@ void cSourceFile::SplitWords()
         else if (((CHAR*)BaseAddress)[i] == ' ' || 
             ((CHAR*)BaseAddress)[i] == '\t' ||
             ((CHAR*)BaseAddress)[i] == '\n' || 
-            ((CHAR*)BaseAddress)[i] == '\r')
-        {
+            ((CHAR*)BaseAddress)[i] == '\r') {
             if (i-1 >=0 && 
                 (((CHAR*)BaseAddress)[i-1] != ' ' && 
                 ((CHAR*)BaseAddress)[i-1] != '\t' && 
@@ -104,7 +99,7 @@ void cSourceFile::SplitWords()
 										i-StartPtr));
         }
 
-        if (i+1 != FileLength &&
+        if (i + 1 != FileLength &&
             (((CHAR*)BaseAddress)[i] == ' ' || 
             ((CHAR*)BaseAddress)[i] == '\t' || 
             ((CHAR*)BaseAddress)[i] == '\n' || 
@@ -115,16 +110,15 @@ void cSourceFile::SplitWords()
             ((CHAR*)BaseAddress)[i+1] != '\r'))
             StartPtr = i+1;
 
-        if (i+1 == FileLength && i != StartPtr)
+        if (i + 1 == FileLength && i != StartPtr)
             Words.push_back(string((CHAR*)BaseAddress, StartPtr,
 									i-StartPtr+1));
     }
 
-    for (UINT i=0; i<Words.size(); i++)
+    for (UINT i = 0; i < Words.size(); i++)
         transform(Words[i].begin(), Words[i].end(), Words[i].begin(), 
 			      ::toupper);
 }
 
-cSourceFile::~cSourceFile(void)
-{
+cSourceFile::~cSourceFile(void) {
 }
