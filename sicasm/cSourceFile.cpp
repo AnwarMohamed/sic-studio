@@ -1,8 +1,6 @@
 #include "cSourceFile.h"
 
-cSourceFile::cSourceFile(
-    CHAR* Filename
-    ): cFile(Filename)
+cSourceFile::cSourceFile(CHAR* Filename): cFile(Filename)
 {
     isReady = FALSE;
     if (BaseAddress)
@@ -89,7 +87,8 @@ void cSourceFile::SplitWords()
                 if ((i+1 == FileLength && i+StartPtr) || 
                     ((CHAR*)BaseAddress)[i-1] == '\n' || 
                     ((CHAR*)BaseAddress)[i-1] == '\r')
-                    Words.push_back(string((CHAR*)BaseAddress, StartPtr, i-StartPtr));
+                    Words.push_back(string((CHAR*)BaseAddress, StartPtr, 
+											i-StartPtr));
         }
         else if (((CHAR*)BaseAddress)[i] == ' ' || 
             ((CHAR*)BaseAddress)[i] == '\t' ||
@@ -101,7 +100,8 @@ void cSourceFile::SplitWords()
                 ((CHAR*)BaseAddress)[i-1] != '\t' && 
                 ((CHAR*)BaseAddress)[i-1] != '\n' && 
                 ((CHAR*)BaseAddress)[i-1] != '\r'))
-                Words.push_back(string((CHAR*)BaseAddress, StartPtr, i-StartPtr));
+                Words.push_back(string((CHAR*)BaseAddress, StartPtr,
+										i-StartPtr));
         }
 
         if (i+1 != FileLength &&
@@ -116,13 +116,14 @@ void cSourceFile::SplitWords()
             StartPtr = i+1;
 
         if (i+1 == FileLength && i != StartPtr)
-            Words.push_back(string((CHAR*)BaseAddress, StartPtr, i-StartPtr+1));
+            Words.push_back(string((CHAR*)BaseAddress, StartPtr,
+									i-StartPtr+1));
     }
 
     for (UINT i=0; i<Words.size(); i++)
-        transform(Words[i].begin(), Words[i].end(), Words[i].begin(), ::toupper);
+        transform(Words[i].begin(), Words[i].end(), Words[i].begin(), 
+			      ::toupper);
 }
-
 
 cSourceFile::~cSourceFile(void)
 {
