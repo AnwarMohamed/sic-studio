@@ -30,7 +30,7 @@ public:
     void StartPass2();
 private:
     void SplitWords();
-	vector<SourceFileLine> _source_file_lines;
+	vector<SourceFileLine*> _source_file_lines;
 
     void ConstructOpTable();
 };
