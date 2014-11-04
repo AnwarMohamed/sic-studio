@@ -4,22 +4,21 @@
 
 using namespace std;
 
-STRUCT SIC_LIST_LINE
+struct ListFileLine
 {
-    UINT Index;
-    UINT Address;
-    string Label;
-    string Opcode;
-    string Operands;
-    string Comment;
-    string Error;
+    int index;
+    int address;
+    string label;
+    string instruction;
+    string operands;
+    string comment;
+    vector<string> errors;
 };
 
 class cListFile: public cSourceFile
 {
 public:
-    cListFile(CHAR* Filename);
+    cListFile(char* filename);
     ~cListFile();
-
 };
 

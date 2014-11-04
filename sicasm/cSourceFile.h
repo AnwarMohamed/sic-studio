@@ -5,14 +5,17 @@
 #include <string>
 #include <map>
 
-enum Error
+enum SourceFileError
 {
 
 };
 
 struct SourceFileLine
 {
-	string directive, insturction, operand, comment;
+	string directive;
+	string instruction;
+	string operand;
+	string comment;
 	int errors;
 };
 
