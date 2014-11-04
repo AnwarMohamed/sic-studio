@@ -20,6 +20,10 @@
 #define ERROR_ILLEGAL_RESW    "illegal operand in resw statement"
 #define ERROR_OPERAND_RESB    "missing or misplaced operand in resb statement"
 #define ERROR_ILLEGAL_RESB    "illegal operand in resb statement"
+#define ERROR_OPERAND_BYTE    "missing or misplaced operand in byte statement"
+#define ERROR_ILLEGAL_BYTE    "illegal operand in byte statement"
+#define ERROR_DUPLICATE_LABEL "duplicate label definition"
+
 
 cListFile::cListFile(char* filename) : cSourceFile(filename) {
 	_start_address = -1;
@@ -114,7 +118,12 @@ bool cListFile::parse_sourcefile_lines() {
 				}
 
 				if (_sourcefile_lines[i]->directive.size()) {
-					_symbols_table[_sourcefile_lines[i]->directive] = i;
+					if (_symbols_table.count(_sourcefile_lines[i]->directive) == 1) {
+						_symbols_table[_sourcefile_lines[i]->directive] = i;
+					}
+					else {
+						listfile_line->errors.push_back(ERROR_DUPLICATE_LABEL);
+					}
 				}
 			}
 			else {
@@ -138,11 +147,15 @@ bool cListFile::parse_sourcefile_lines() {
 				else {
 					listfile_line->errors.push_back(ERROR_ILLEGAL_RESW);
 					listfile_line->address = current_address;
-					current_address += 3;
 				}
 
 				if (_sourcefile_lines[i]->directive.size()) {
-					_symbols_table[_sourcefile_lines[i]->directive] = i;
+					if (_symbols_table.count(_sourcefile_lines[i]->directive) == 1) {
+						_symbols_table[_sourcefile_lines[i]->directive] = i;
+					}
+					else {
+						listfile_line->errors.push_back(ERROR_DUPLICATE_LABEL);
+					}
 				}
 			}
 			else {
@@ -166,11 +179,15 @@ bool cListFile::parse_sourcefile_lines() {
 				else {
 					listfile_line->errors.push_back(ERROR_ILLEGAL_RESB);
 					listfile_line->address = current_address;
-					current_address += 1;
 				}
 
 				if (_sourcefile_lines[i]->directive.size()) {
-					_symbols_table[_sourcefile_lines[i]->directive] = i;
+					if (_symbols_table.count(_sourcefile_lines[i]->directive) == 1) {
+						_symbols_table[_sourcefile_lines[i]->directive] = i;
+					}
+					else {
+						listfile_line->errors.push_back(ERROR_DUPLICATE_LABEL);
+					}
 				}
 			}
 			else {
@@ -180,6 +197,35 @@ bool cListFile::parse_sourcefile_lines() {
 			}
 		}
 
+		/* Handling BYTE Operation */
+		else if (_sourcefile_lines[i]->instruction == "BYTE") {
+			if (_sourcefile_lines[i]->operand.size()) {
+				
+				if (_sourcefile_lines[i]->operand[0] == 'C') {
+
+				}
+				else if (_sourcefile_lines[i]->operand[0] == 'X') {
+				}
+				else {
+					listfile_line->errors.push_back(ERROR_ILLEGAL_BYTE);
+					listfile_line->address = current_address;
+				}
+
+				if (_sourcefile_lines[i]->directive.size()) {
+					if (_symbols_table.count(_sourcefile_lines[i]->directive) == 1) {
+						_symbols_table[_sourcefile_lines[i]->directive] = i;
+					}
+					else {
+						listfile_line->errors.push_back(ERROR_DUPLICATE_LABEL);
+					}
+				}
+			}
+			else {
+				listfile_line->errors.push_back(ERROR_OPERAND_BYTE);
+				listfile_line->address = current_address;
+				current_address += 1;
+			}
+		}
 
 		if (i == 0 && _start_address == -1) {
 			listfile_line->errors.push_back(ERROR_MISSING_START);
