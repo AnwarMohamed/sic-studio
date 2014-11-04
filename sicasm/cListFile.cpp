@@ -9,19 +9,17 @@
 #define ERROR_UNRECOG_OPCODE  "unrecognized operation code"
 #define ERROR_MISSING_OPERAND "missing or misplaced operand in instruction"
 #define ERROR_UNDEFINED_SYM   "undefined symbol in operand"
-
 #define ERROR_MISSING_START   "missing or misplaced start statement"
 #define ERROR_ILLEGAL_START   "illegal operand in start statement"
 #define ERROR_DUPLICATE_START "duplicate or misplaced start statement"
-
 #define ERROR_OPERAND_END     "missing or misplaced operand in end statement"
 #define ERROR_AFTER_END       "statement should not follow end statement"
-
 #define ERROR_OPERAND_WORD    "missing or misplaced operand in word statement"
 #define ERROR_ILLEGAL_WORD    "illegal operand in word statement"
-
 #define ERROR_OPERAND_RESW    "missing or misplaced operand in resw statement"
 #define ERROR_ILLEGAL_RESW    "illegal operand in resw statement"
+#define ERROR_OPERAND_RESB    "missing or misplaced operand in resb statement"
+#define ERROR_ILLEGAL_RESB    "illegal operand in resb statement"
 
 cListFile::cListFile(char* filename) : cSourceFile(filename) {
 	_start_address = -1;
@@ -153,6 +151,35 @@ bool cListFile::parse_sourcefile_lines() {
 				current_address += 3;
 			}
 		}
+
+		/* Handling RESB Operation */
+		else if (_sourcefile_lines[i]->instruction == "RESB") {
+			if (_sourcefile_lines[i]->operand.size()) {
+				int operand_value;
+				if (is_numeric(_sourcefile_lines[i]->operand) &&
+					(operand_value = str_to_int(
+					(char*)_sourcefile_lines[i]->operand.c_str())) != -1) {
+					listfile_line->errors.push_back(ERROR_UNDEFINED_SYM);
+					listfile_line->address = current_address;
+					current_address += operand_value;
+				}
+				else {
+					listfile_line->errors.push_back(ERROR_ILLEGAL_RESB);
+					listfile_line->address = current_address;
+					current_address += 1;
+				}
+
+				if (_sourcefile_lines[i]->directive.size()) {
+					_symbols_table[_sourcefile_lines[i]->directive] = i;
+				}
+			}
+			else {
+				listfile_line->errors.push_back(ERROR_OPERAND_RESB);
+				listfile_line->address = current_address;
+				current_address += 1;
+			}
+		}
+
 
 		if (i == 0 && _start_address == -1) {
 			listfile_line->errors.push_back(ERROR_MISSING_START);
