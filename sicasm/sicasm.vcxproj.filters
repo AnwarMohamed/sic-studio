@@ -30,6 +30,9 @@
     <ClCompile Include="cObjectFile.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="cConstants.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="sicasm.h">
@@ -45,6 +48,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="cObjectFile.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="cConstants.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

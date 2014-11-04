@@ -78,6 +78,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="cConstants.cpp" />
     <ClCompile Include="cFile.cpp" />
     <ClCompile Include="cListFile.cpp" />
     <ClCompile Include="cObjectFile.cpp" />
@@ -85,6 +86,7 @@
     <ClCompile Include="main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="cConstants.h" />
     <ClInclude Include="cFile.h" />
     <ClInclude Include="cListFile.h" />
     <ClInclude Include="cObjectFile.h" />

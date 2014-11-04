@@ -4,6 +4,13 @@
 #include <algorithm>
 #include <string>
 #include <map>
+#include <sstream>
+
+
+#include<iostream>
+
+using namespace std;
+
 
 enum SourceFileError
 {
@@ -27,10 +34,10 @@ public:
     cSourceFile(CHAR* Filename);
     ~cSourceFile(void);
 
-	BOOL is_ready;
-
     void StartPass1();
     void StartPass2();
+
+	BOOL is_ready;
 
 protected:
 	vector<SourceFileLine*> _sourcefile_lines;
