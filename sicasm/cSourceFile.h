@@ -27,14 +27,11 @@ public:
     ~cSourceFile(void);
 
     BOOL isReady;
-    map<string, UCHAR> OpTable;
 
     void StartPass1();
     void StartPass2();
 private:
     void SplitWords();
-	vector<SourceFileLine*> _source_file_lines;
-
-    void ConstructOpTable();
+	vector<SourceFileLine*> _sourcefile_lines;
 };
 
