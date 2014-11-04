@@ -54,6 +54,7 @@ cFile::cFile(char* Filename)
     IsFile = TRUE;
     return;
 }
+
 cFile::cFile(char* Buffer, DWORD Size)
 {
     BaseAddress = (DWORD)Buffer;
@@ -63,6 +64,7 @@ cFile::cFile(char* Buffer, DWORD Size)
     IsFile = FALSE;
     IsReassembled = TRUE;
 }
+
 cFile::~cFile()
 {
     if (BaseAddress != NULL && IsFile)

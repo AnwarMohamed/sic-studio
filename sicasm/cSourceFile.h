@@ -5,6 +5,18 @@
 #include <string>
 #include <map>
 
+enum Error
+{
+
+};
+
+struct SourceFileLine
+{
+	string directive, insturction, operand, comment;
+	int errors;
+};
+
+
 class cSourceFile: public cFile
 {
 public:
@@ -18,7 +30,7 @@ public:
     void StartPass2();
 private:
     void SplitWords();
-    vector<string> Words;
+	vector<SourceFileLine> _source_file_lines;
 
     void ConstructOpTable();
 };

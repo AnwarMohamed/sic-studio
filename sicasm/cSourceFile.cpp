@@ -3,7 +3,7 @@
 cSourceFile::cSourceFile(CHAR* Filename): cFile(Filename) {
     isReady = FALSE;
     if (BaseAddress) {
-        SplitWords();
+        Split_source_file_lines();
         ConstructOpTable();
     }
 }
@@ -73,29 +73,29 @@ void cSourceFile::ConstructOpTable()
 
 void cSourceFile::SplitWords()
 {
-    UINT StartPtr=0;
-    for (UINT i = 0; i < FileLength; i++) {
+    UINT StartPtr = 0;
+    for (UINT i = 0; i < FileLength; ++i) {
         if (!isascii(((CHAR*)BaseAddress)[i]))
             return;
         else if(((CHAR*)BaseAddress)[i] == '.') {
             StartPtr = i;
-            for (i; i<FileLength; i++)
-                if ((i+1 == FileLength && i+StartPtr) || 
-                    ((CHAR*)BaseAddress)[i-1] == '\n' || 
-                    ((CHAR*)BaseAddress)[i-1] == '\r')
-                    Words.push_back(string((CHAR*)BaseAddress, StartPtr, 
+            for (i; i < FileLength; ++i)
+                if ((i + 1 == FileLength && i+StartPtr) || 
+                    ((CHAR*)BaseAddress)[i - 1] == '\n' || 
+                    ((CHAR*)BaseAddress)[i - 1] == '\r')
+                    _source_file_lines.push_back(string((CHAR*)BaseAddress, StartPtr, 
 											i-StartPtr));
         }
         else if (((CHAR*)BaseAddress)[i] == ' ' || 
             ((CHAR*)BaseAddress)[i] == '\t' ||
             ((CHAR*)BaseAddress)[i] == '\n' || 
             ((CHAR*)BaseAddress)[i] == '\r') {
-            if (i-1 >=0 && 
+            if (i - 1 >= 0 && 
                 (((CHAR*)BaseAddress)[i-1] != ' ' && 
                 ((CHAR*)BaseAddress)[i-1] != '\t' && 
                 ((CHAR*)BaseAddress)[i-1] != '\n' && 
                 ((CHAR*)BaseAddress)[i-1] != '\r'))
-                Words.push_back(string((CHAR*)BaseAddress, StartPtr,
+                _source_file_lines.push_back(string((CHAR*)BaseAddress, StartPtr,
 										i-StartPtr));
         }
 
@@ -111,12 +111,12 @@ void cSourceFile::SplitWords()
             StartPtr = i+1;
 
         if (i + 1 == FileLength && i != StartPtr)
-            Words.push_back(string((CHAR*)BaseAddress, StartPtr,
+            _source_file_lines.push_back(string((CHAR*)BaseAddress, StartPtr,
 									i-StartPtr+1));
     }
 
-    for (UINT i = 0; i < Words.size(); i++)
-        transform(Words[i].begin(), Words[i].end(), Words[i].begin(), 
+    for (UINT i = 0; i < _source_file_lines.size(); ++i)
+        transform(_source_file_lines[i].begin(), _source_file_lines[i].end(), _source_file_lines[i].begin(), 
 			      ::toupper);
 }
 
