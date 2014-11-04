@@ -8,12 +8,18 @@
 #define ERROR_MISSING_OPCODE  "missing operation code"
 #define ERROR_UNRECOG_OPCODE  "unrecognized operation code"
 #define ERROR_MISSING_OPERAND "missing or misplaced operand in instruction"
+#define ERROR_UNDEFINED_SYM   "undefined symbol in operand"
+
 #define ERROR_MISSING_START   "missing or misplaced start statement"
 #define ERROR_ILLEGAL_START   "illegal operand in start statement"
 #define ERROR_DUPLICATE_START "duplicate or misplaced start statement"
 
+#define ERROR_OPERAND_END     "missing or misplaced operand in end statement"
+#define ERROR_AFTER_END       "statement should not follow end statement"
+
 cListFile::cListFile(char* filename) : cSourceFile(filename) {
-	start_address = -1;
+	_start_address = -1;
+	_end_set = false;
 	is_ready = parse_sourcefile_lines();
 }
 
@@ -29,41 +35,73 @@ bool cListFile::parse_sourcefile_lines() {
 		/* Handling START Operation */
 		if (_sourcefile_lines[i]->instruction == "START") {
 			if (_sourcefile_lines[i]->operand.size() == 4) {
-				if (start_address == -1) {
-					start_address = hex_to_int(
+				if (_start_address == -1) {
+					_start_address = hex_to_int(
 						(char*)_sourcefile_lines[i]->operand.c_str());
 
-					if (start_address == -1) {
+					if (_start_address == -1) {
 						listfile_line->errors.push_back(ERROR_ILLEGAL_START);
 						listfile_line->address = current_address;
 					}
 					else {
-						listfile_line->address = start_address;
+						listfile_line->address = _start_address;
 						current_address += 3;
+
+						if (_sourcefile_lines[i]->directive.size()) {
+							_symbols_table[_sourcefile_lines[i]->directive] = i;
+						}
 					}
 				}
 				else {
 					listfile_line->errors.push_back(ERROR_DUPLICATE_START);
-					listfile_line->address = current_address;
+
+					listfile_line->address = hex_to_int(
+						(char*)_sourcefile_lines[i]->operand.c_str());
+
+					if (listfile_line->address == -1) {
+						listfile_line->address = current_address;
+					}
 				}
 			}
 			else {
 				listfile_line->errors.push_back(ERROR_MISSING_OPERAND);
 				listfile_line->address = current_address;
 
-				if (start_address != -1) {
+				if (_start_address != -1) {
 					listfile_line->errors.push_back(ERROR_DUPLICATE_START);
 				}
 			}
 		}
 
+		/* Handling END Operation*/
+		else if (_sourcefile_lines[i]->instruction == "END") {
+			if (_sourcefile_lines[i]->operand.size()) {
+				if (_symbols_table.count(_sourcefile_lines[i]->operand) != 1) {
+					listfile_line->errors.push_back(ERROR_UNDEFINED_SYM);
+				}
 
-		if (i == 0 && start_address == -1) {
+				if (_sourcefile_lines[i]->directive.size()) {
+					_symbols_table[_sourcefile_lines[i]->directive] = i;
+				}
+			}
+			else {
+				listfile_line->errors.push_back(ERROR_OPERAND_END);
+				listfile_line->address = current_address;
+			}
+		}
+
+		if (i == 0 && _start_address == -1) {
 			listfile_line->errors.push_back(ERROR_MISSING_START);
 		}
 
-		return true;
+		if (_end_set && _sourcefile_lines[i]->instruction != "END") {
+			listfile_line->errors.push_back(ERROR_AFTER_END);
+		}
+
+		_listfile_lines.push_back(listfile_line);
 	}
+
+	return true;
 }
 
 int cListFile::hex_to_int(char* hex) {

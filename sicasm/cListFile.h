@@ -29,7 +29,11 @@ private:
 	bool parse_sourcefile_lines();
 	int hex_to_int(char* hex);
 
+	bool _end_set;
+
 protected:
-	int start_address;
+	int _start_address;
+	map<string, int> _symbols_table;
+	vector<ListFileLine*> _listfile_lines;
 };
 
