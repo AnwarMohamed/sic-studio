@@ -7,7 +7,8 @@
 
 enum SourceFileError
 {
-
+	kOk = 0,
+	kInvalidInstruction = 1 << 0,
 };
 
 struct SourceFileLine
@@ -26,12 +27,17 @@ public:
     cSourceFile(CHAR* Filename);
     ~cSourceFile(void);
 
-    BOOL isReady;
+	BOOL is_ready;
 
     void StartPass1();
     void StartPass2();
+
+protected:
+	vector<SourceFileLine*> _sourcefile_lines;
+
 private:
     void SplitWords();
-	vector<SourceFileLine*> _sourcefile_lines;
+
+
 };
 
