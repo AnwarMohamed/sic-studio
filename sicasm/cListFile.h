@@ -31,7 +31,13 @@ private:
 	int str_to_int(char* str);
 
 	bool _end_set;
+	int _current_address;
+
 	bool is_numeric(string& str);
+	bool is_hex_number(string& str);
+	bool is_word_str(string& str);
+	void construct_symbol_table();
+	bool parse_instructions();
 
 protected:
 	int _start_address;

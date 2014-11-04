@@ -26,217 +26,126 @@
 
 
 cListFile::cListFile(char* filename) : cSourceFile(filename) {
-	_start_address = -1;
 	_end_set = false;
-	is_ready = parse_sourcefile_lines();
+	is_ready = is_ready ? parse_sourcefile_lines() : false;
 }
 
-bool cListFile::parse_sourcefile_lines() {
-
+void cListFile::construct_symbol_table() {
 	ListFileLine* listfile_line;
-	int current_address = 0;
 
 	for (int i = 0; i < (int)_sourcefile_lines.size(); ++i) {
 		listfile_line = new ListFileLine;
 		zero(listfile_line, sizeof(ListFileLine));
 
-		/* Handling START Operation */
-		if (_sourcefile_lines[i]->instruction == "START") {
-			if (_sourcefile_lines[i]->operand.size() == 4) {
-				if (_start_address == -1) {
-					_start_address = hex_to_int(
-						(char*)_sourcefile_lines[i]->operand.c_str());
-
-					if (_start_address == -1) {
-						listfile_line->errors.push_back(ERROR_ILLEGAL_START);
-						listfile_line->address = current_address;
-					}
-					else {
-						listfile_line->address = _start_address;
-						current_address = _start_address;
-
-						if (_sourcefile_lines[i]->directive.size()) {
-							_symbols_table[_sourcefile_lines[i]->directive] = i;
-						}
-					}
-				}
-				else {
-					listfile_line->errors.push_back(ERROR_DUPLICATE_START);
-
-					listfile_line->address = hex_to_int(
-						(char*)_sourcefile_lines[i]->operand.c_str());
-
-					if (listfile_line->address == -1) {
-						listfile_line->address = current_address;
-					}
-				}
+		if (_sourcefile_lines[i]->directive.size()) {
+			if (_symbols_table.count(_sourcefile_lines[i]->directive) == 0) {
+				_symbols_table[_sourcefile_lines[i]->directive] = i;
 			}
 			else {
-				listfile_line->errors.push_back(ERROR_MISSING_OPERAND);
-				listfile_line->address = current_address;
-
-				if (_start_address != -1) {
-					listfile_line->errors.push_back(ERROR_DUPLICATE_START);
-				}
+				listfile_line->errors.push_back(ERROR_DUPLICATE_LABEL);
 			}
-		}
-
-		/* Handling END Operation */
-		else if (_sourcefile_lines[i]->instruction == "END") {
-			listfile_line->address = current_address;
-
-			if (_sourcefile_lines[i]->operand.size()) {
-				if (_symbols_table.count(_sourcefile_lines[i]->operand) != 1) {
-					listfile_line->errors.push_back(ERROR_UNDEFINED_SYM);
-				}
-				else {
-					_end_set = true;
-				}
-
-				if (_sourcefile_lines[i]->directive.size()) {
-					_symbols_table[_sourcefile_lines[i]->directive] = i;
-				}
-			}
-			else {
-				listfile_line->errors.push_back(ERROR_OPERAND_END);
-			}
-		}
-
-		/* Handling WORD Operation */
-		else if (_sourcefile_lines[i]->instruction == "WORD") {
-			listfile_line->address = current_address;
-
-			if (_sourcefile_lines[i]->operand.size()) {
-				if (is_numeric(_sourcefile_lines[i]->operand) &&
-					str_to_int(
-						(char*)_sourcefile_lines[i]->operand.c_str()) != -1) {
-					listfile_line->errors.push_back(ERROR_UNDEFINED_SYM);
-					current_address += 3;
-				}
-				else {
-					listfile_line->errors.push_back(ERROR_ILLEGAL_WORD);
-					current_address += 3;
-				}
-
-				if (_sourcefile_lines[i]->directive.size()) {
-					if (_symbols_table.count(_sourcefile_lines[i]->directive) == 1) {
-						_symbols_table[_sourcefile_lines[i]->directive] = i;
-					}
-					else {
-						listfile_line->errors.push_back(ERROR_DUPLICATE_LABEL);
-					}
-				}
-			}
-			else {
-				listfile_line->errors.push_back(ERROR_OPERAND_WORD);
-				current_address += 3;
-			}
-		}
-
-		/* Handling RESW Operation */
-		else if (_sourcefile_lines[i]->instruction == "RESW") {
-			listfile_line->address = current_address;
-
-			if (_sourcefile_lines[i]->operand.size()) {
-				int operand_value;
-				if (is_numeric(_sourcefile_lines[i]->operand) &&
-					(operand_value = str_to_int(
-						(char*)_sourcefile_lines[i]->operand.c_str())) != -1) {
-					listfile_line->errors.push_back(ERROR_UNDEFINED_SYM);
-					current_address += (3* operand_value);
-				}
-				else {
-					listfile_line->errors.push_back(ERROR_ILLEGAL_RESW);					
-				}
-
-				if (_sourcefile_lines[i]->directive.size()) {
-					if (_symbols_table.count(_sourcefile_lines[i]->directive) == 1) {
-						_symbols_table[_sourcefile_lines[i]->directive] = i;
-					}
-					else {
-						listfile_line->errors.push_back(ERROR_DUPLICATE_LABEL);
-					}
-				}
-			}
-			else {
-				listfile_line->errors.push_back(ERROR_OPERAND_RESW);
-				current_address += 3;
-			}
-		}
-
-		/* Handling RESB Operation */
-		else if (_sourcefile_lines[i]->instruction == "RESB") {
-			listfile_line->address = current_address;
-
-			if (_sourcefile_lines[i]->operand.size()) {
-				int operand_value;
-				if (is_numeric(_sourcefile_lines[i]->operand) &&
-					(operand_value = str_to_int(
-					(char*)_sourcefile_lines[i]->operand.c_str())) != -1) {
-					listfile_line->errors.push_back(ERROR_UNDEFINED_SYM);
-					current_address += operand_value;
-				}
-				else {
-					listfile_line->errors.push_back(ERROR_ILLEGAL_RESB);					
-				}
-
-				if (_sourcefile_lines[i]->directive.size()) {
-					if (_symbols_table.count(_sourcefile_lines[i]->directive) == 1) {
-						_symbols_table[_sourcefile_lines[i]->directive] = i;
-					}
-					else {
-						listfile_line->errors.push_back(ERROR_DUPLICATE_LABEL);
-					}
-				}
-			}
-			else {
-				listfile_line->errors.push_back(ERROR_OPERAND_RESB);
-				current_address += 1;
-			}
-		}
-
-		/* Handling BYTE Operation */
-		else if (_sourcefile_lines[i]->instruction == "BYTE") {
-			listfile_line->address = current_address;
-
-			if (_sourcefile_lines[i]->operand.size()) {		
-				if (_sourcefile_lines[i]->operand[0] == 'C') {
-					current_address += (_sourcefile_lines[i]->operand.size() - 3);
-				}
-				else if (_sourcefile_lines[i]->operand[0] == 'X') {
-					current_address += 1;
-				}
-				else {
-					listfile_line->errors.push_back(ERROR_ILLEGAL_BYTE);
-				}
-
-				if (_sourcefile_lines[i]->directive.size()) {
-					if (_symbols_table.count(_sourcefile_lines[i]->directive) == 1) {
-						_symbols_table[_sourcefile_lines[i]->directive] = i;
-					}
-					else {
-						listfile_line->errors.push_back(ERROR_DUPLICATE_LABEL);
-					}
-				}
-			}
-			else {
-				listfile_line->errors.push_back(ERROR_OPERAND_BYTE);
-				current_address += 1;
-			}
-		}
-
-		if (i == 0 && _start_address == -1) {
-			listfile_line->errors.push_back(ERROR_MISSING_START);
-		}
-
-		if (_end_set && _sourcefile_lines[i]->instruction != "END") {
-			listfile_line->errors.push_back(ERROR_AFTER_END);
 		}
 
 		_listfile_lines.push_back(listfile_line);
 	}
+}
+
+bool cListFile::parse_instructions() {
+	if (!_sourcefile_lines.size()) {
+		return false;
+	}
+
+	if (_sourcefile_lines[0]->instruction == "START") {
+		if (is_hex_number(_sourcefile_lines[0]->operand)) {
+			_start_address = _current_address = 
+				hex_to_int((char*)_sourcefile_lines[0]->operand.c_str());
+		}
+		else {
+			_start_address = _current_address = 0;
+			_listfile_lines[0]->errors.push_back(ERROR_ILLEGAL_START);
+		}
+	}
+	else {
+		_start_address = _current_address = 0;
+		_listfile_lines[0]->errors.push_back(ERROR_MISSING_START);
+	}
+
+	for (int i = 1; i < _sourcefile_lines.size(); ++i) {
+		if (_sourcefile_lines[i]->instruction.size()) {
+
+			/* Handling START Operation */
+			if (_sourcefile_lines[i]->instruction == "START") {
+				_listfile_lines[i]->errors.push_back(ERROR_DUPLICATE_START);
+			}
+
+			/* Handling WORD Operation */
+			else if (_sourcefile_lines[i]->instruction == "WORD") {
+				_listfile_lines[i]->address = _current_address;
+				_current_address += 3;
+
+				if (!is_word_str(_sourcefile_lines[i]->operand)) {
+					_listfile_lines[i]->errors.push_back(ERROR_ILLEGAL_WORD);
+				}
+			}
+
+			/* Handling BYTE Operation */
+			else if (_sourcefile_lines[i]->instruction == "BYTE") {
+				_listfile_lines[i]->address = _current_address;
+
+				if (_sourcefile_lines[i]->operand[0] == 'C') {
+					_current_address += (_sourcefile_lines[i]->operand.size() - 3);
+				}
+				else if (_sourcefile_lines[i]->operand[0] == 'X') {
+					_current_address += 1;
+				}
+				else {
+					_listfile_lines[i]->errors.push_back(ERROR_ILLEGAL_BYTE);
+				}
+			}
+
+			/* Handling RESW Operation */
+			else if (_sourcefile_lines[i]->instruction == "RESW") {
+				_listfile_lines[i]->address = _current_address;
+
+				if (!is_word_str(_sourcefile_lines[i]->operand)) {
+					_listfile_lines[i]->errors.push_back(ERROR_ILLEGAL_RESW);
+					_current_address += 3;
+				}
+				else {
+					_current_address += (3 * str_to_int(
+						(char*)_sourcefile_lines[i]->operand.c_str()));
+				}
+			}
+
+			/* Handling RESB Operation */
+			else if (_sourcefile_lines[i]->instruction == "RESB") {
+				_listfile_lines[i]->address = _current_address;
+
+				if (!is_word_str(_sourcefile_lines[i]->operand)) {
+					_listfile_lines[i]->errors.push_back(ERROR_ILLEGAL_RESB);
+					_current_address += 1;
+				}
+				else {
+					_current_address += str_to_int(
+						(char*)_sourcefile_lines[i]->operand.c_str());
+				}
+			}
+
+
+		}
+	}
 
 	return true;
+}
+
+bool cListFile::parse_sourcefile_lines() {
+
+	construct_symbol_table();
+	return parse_instructions();
+}
+
+bool cListFile::is_word_str(string& str) {
+	return is_numeric(str) && (str_to_int((char*)str.c_str()) != 1 ? true : false);
 }
 
 bool cListFile::is_numeric(string& str) {
@@ -244,6 +153,10 @@ bool cListFile::is_numeric(string& str) {
 		if (!isdigit(str[i]))
 			return false;
 	return true;
+}
+
+bool cListFile::is_hex_number(string& str) {
+	return str.size() ? hex_to_int((char*)str.c_str()) == -1 ? false : true: false;
 }
 
 int cListFile::str_to_int(char* str) {
