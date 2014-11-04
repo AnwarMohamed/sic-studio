@@ -4,6 +4,10 @@
 
 using namespace std;
 
+enum ListFileErrors {
+	
+};
+
 struct ListFileLine
 {
     int index;
@@ -20,5 +24,12 @@ class cListFile: public cSourceFile
 public:
     cListFile(char* filename);
     ~cListFile();
+
+private:
+	bool parse_sourcefile_lines();
+	int hex_to_int(char* hex);
+
+protected:
+	int start_address;
 };
 
