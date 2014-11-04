@@ -1,13 +1,9 @@
 #include "cListFile.h"
 #include <cctype>
 
-cListFile::cListFile(
-    CHAR* Filename
-    ): cSourceFile(Filename)
-{
-
+cListFile::cListFile(char* filename): cSourceFile(filename) {
+	
 }
 
-cListFile::~cListFile()
-{
+cListFile::~cListFile() {
 }

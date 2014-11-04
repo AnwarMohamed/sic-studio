@@ -5,14 +5,17 @@
 #include <string>
 #include <map>
 
-enum Error
+enum SourceFileError
 {
 
 };
 
 struct SourceFileLine
 {
-	string directive, insturction, operand, comment;
+	string directive;
+	string instruction;
+	string operand;
+	string comment;
 	int errors;
 };
 
@@ -30,7 +33,7 @@ public:
     void StartPass2();
 private:
     void SplitWords();
-	vector<SourceFileLine> _source_file_lines;
+	vector<SourceFileLine*> _source_file_lines;
 
     void ConstructOpTable();
 };
