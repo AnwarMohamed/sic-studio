@@ -83,6 +83,8 @@ bool cListFile::parse_sourcefile_lines() {
 
 		/* Handling END Operation */
 		else if (_sourcefile_lines[i]->instruction == "END") {
+			listfile_line->address = current_address;
+
 			if (_sourcefile_lines[i]->operand.size()) {
 				if (_symbols_table.count(_sourcefile_lines[i]->operand) != 1) {
 					listfile_line->errors.push_back(ERROR_UNDEFINED_SYM);
@@ -97,23 +99,22 @@ bool cListFile::parse_sourcefile_lines() {
 			}
 			else {
 				listfile_line->errors.push_back(ERROR_OPERAND_END);
-				listfile_line->address = current_address;
 			}
 		}
 
 		/* Handling WORD Operation */
 		else if (_sourcefile_lines[i]->instruction == "WORD") {
+			listfile_line->address = current_address;
+
 			if (_sourcefile_lines[i]->operand.size()) {
 				if (is_numeric(_sourcefile_lines[i]->operand) &&
 					str_to_int(
 						(char*)_sourcefile_lines[i]->operand.c_str()) != -1) {
 					listfile_line->errors.push_back(ERROR_UNDEFINED_SYM);
-					listfile_line->address = current_address;
 					current_address += 3;
 				}
 				else {
 					listfile_line->errors.push_back(ERROR_ILLEGAL_WORD);
-					listfile_line->address = current_address;
 					current_address += 3;
 				}
 
@@ -128,25 +129,24 @@ bool cListFile::parse_sourcefile_lines() {
 			}
 			else {
 				listfile_line->errors.push_back(ERROR_OPERAND_WORD);
-				listfile_line->address = current_address;
 				current_address += 3;
 			}
 		}
 
 		/* Handling RESW Operation */
 		else if (_sourcefile_lines[i]->instruction == "RESW") {
+			listfile_line->address = current_address;
+
 			if (_sourcefile_lines[i]->operand.size()) {
 				int operand_value;
 				if (is_numeric(_sourcefile_lines[i]->operand) &&
 					(operand_value = str_to_int(
 						(char*)_sourcefile_lines[i]->operand.c_str())) != -1) {
 					listfile_line->errors.push_back(ERROR_UNDEFINED_SYM);
-					listfile_line->address = current_address;
 					current_address += (3* operand_value);
 				}
 				else {
-					listfile_line->errors.push_back(ERROR_ILLEGAL_RESW);
-					listfile_line->address = current_address;
+					listfile_line->errors.push_back(ERROR_ILLEGAL_RESW);					
 				}
 
 				if (_sourcefile_lines[i]->directive.size()) {
@@ -160,25 +160,24 @@ bool cListFile::parse_sourcefile_lines() {
 			}
 			else {
 				listfile_line->errors.push_back(ERROR_OPERAND_RESW);
-				listfile_line->address = current_address;
 				current_address += 3;
 			}
 		}
 
 		/* Handling RESB Operation */
 		else if (_sourcefile_lines[i]->instruction == "RESB") {
+			listfile_line->address = current_address;
+
 			if (_sourcefile_lines[i]->operand.size()) {
 				int operand_value;
 				if (is_numeric(_sourcefile_lines[i]->operand) &&
 					(operand_value = str_to_int(
 					(char*)_sourcefile_lines[i]->operand.c_str())) != -1) {
 					listfile_line->errors.push_back(ERROR_UNDEFINED_SYM);
-					listfile_line->address = current_address;
 					current_address += operand_value;
 				}
 				else {
-					listfile_line->errors.push_back(ERROR_ILLEGAL_RESB);
-					listfile_line->address = current_address;
+					listfile_line->errors.push_back(ERROR_ILLEGAL_RESB);					
 				}
 
 				if (_sourcefile_lines[i]->directive.size()) {
@@ -192,23 +191,23 @@ bool cListFile::parse_sourcefile_lines() {
 			}
 			else {
 				listfile_line->errors.push_back(ERROR_OPERAND_RESB);
-				listfile_line->address = current_address;
 				current_address += 1;
 			}
 		}
 
 		/* Handling BYTE Operation */
 		else if (_sourcefile_lines[i]->instruction == "BYTE") {
-			if (_sourcefile_lines[i]->operand.size()) {
-				
-				if (_sourcefile_lines[i]->operand[0] == 'C') {
+			listfile_line->address = current_address;
 
+			if (_sourcefile_lines[i]->operand.size()) {		
+				if (_sourcefile_lines[i]->operand[0] == 'C') {
+					current_address += (_sourcefile_lines[i]->operand.size() - 3);
 				}
 				else if (_sourcefile_lines[i]->operand[0] == 'X') {
+					current_address += 1;
 				}
 				else {
 					listfile_line->errors.push_back(ERROR_ILLEGAL_BYTE);
-					listfile_line->address = current_address;
 				}
 
 				if (_sourcefile_lines[i]->directive.size()) {
@@ -222,7 +221,6 @@ bool cListFile::parse_sourcefile_lines() {
 			}
 			else {
 				listfile_line->errors.push_back(ERROR_OPERAND_BYTE);
-				listfile_line->address = current_address;
 				current_address += 1;
 			}
 		}
