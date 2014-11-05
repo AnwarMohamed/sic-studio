@@ -166,4 +166,5 @@ struct SICCodeLine {
     string comment;
     vector<char> object_code;
     vector<string> errors;
+    bool operand_indexed;
 };

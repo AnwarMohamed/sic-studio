@@ -9,12 +9,11 @@ public:
     cListFile(char* filename);
     ~cListFile();
 
-    void print_listfile();
+    virtual void print_listfile();
 
 private:
     bool parse_siccode_lines();
     int hex_to_int(char* hex);
-    int str_to_int(char* str);
 
     bool _end_set;
     bool _start_set;
@@ -31,5 +30,7 @@ protected:
     int _start_address;
     map<string, int> _symbols_table;
     map<string, SICOpCode*> _opcodes_table;
+
+    int str_to_int(char* str);
 };
 

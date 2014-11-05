@@ -5,12 +5,9 @@
 #include <string>
 #include <map>
 #include <sstream>
-
-
 #include<iostream>
 
 using namespace std;
-
 
 enum SourceFileError
 {
@@ -18,21 +15,10 @@ enum SourceFileError
 	kInvalidInstruction = 1 << 0,
 };
 
-struct SourceFileLine
-{
-	string directive;
-	string instruction;
-	string operand;
-	string comment;
-	int errors;
-};
-
-
-class cSourceFile: public cFile
-{
+class cSourceFile: public cFile {
 public:
-    cSourceFile(CHAR* Filename);
-    ~cSourceFile(void);
+    cSourceFile(char* filename);
+    ~cSourceFile();
 
     void StartPass1();
     void StartPass2();
@@ -40,11 +26,9 @@ public:
 	BOOL is_ready;
 
 protected:
-	vector<SourceFileLine*> _sourcefile_lines;
+    vector<SICCodeLine*> _siccode_lines;
 
 private:
     void SplitWords();
-
-
 };
 
