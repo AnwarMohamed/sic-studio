@@ -32,23 +32,23 @@ void cObjectFile::generate_object_code() {
         if (siccode_line->errors.size() == 0) {
 
             if (siccode_line->mnemonic == "BYTE") {
-                if (siccode_line->operand[0] == 'C') {
-                    string str_array = siccode_line->operand.substr(
-                        2, siccode_line->operand.size() - 3);
+                if (siccode_line->operands[0][0] == 'C') {
+                    string str_array = siccode_line->operands[0].substr(
+                        2, siccode_line->operands[0].size() - 3);
                     for (int j = 0; j < (int)str_array.size(); ++j) {
                         siccode_line->object_code.push_back(str_array[j]);
                     }
                 }
-                else if (siccode_line->operand[0] == 'X') {
+                else if (siccode_line->operands[0][0] == 'X') {
                     siccode_line->object_code.push_back(
                         (char)hex_to_int(
-                        (char*)siccode_line->operand.substr(2,3).c_str()));
+                        (char*)siccode_line->operands[0].substr(2, 3).c_str()));
                 }
             }
 
             else if (siccode_line->mnemonic == "WORD") {
                 append_object_code(siccode_line->object_code, 
-                    str_to_int((char*)siccode_line->operand.c_str()));
+                    str_to_int((char*)siccode_line->operands[0].c_str()));
             }
 
             else if (siccode_line->mnemonic == "RESW" ||
@@ -67,27 +67,22 @@ void cObjectFile::generate_object_code() {
                     append_object_code(siccode_line->object_code, (short)0);
                     break;
                 case 1:
-                    if (siccode_line->operand_indexed) {
+                    if (siccode_line->is_indexed) {
                         append_object_code(siccode_line->object_code, 
                             (short)(_siccode_lines[_symbols_table[
-                                siccode_line->operand.substr(
-                                    0, siccode_line->operand.find(','))]
+                                siccode_line->operands[0]]
                             ]->address | 0x8000));
                     }
                     else {
                         append_object_code(siccode_line->object_code,
                             (short)(_siccode_lines[_symbols_table[
-                                siccode_line->operand.substr(
-                                    0, siccode_line->operand.find(','))]
+                                siccode_line->operands[0]]
                             ]->address));
                     }
                     break;
                 case 2: {
-                        string loperand = siccode_line->operand.substr(
-                            0, siccode_line->operand.find(','));
-                        string roperand = siccode_line->operand.substr(
-                            siccode_line->operand.find(','), 
-                            siccode_line->operand.size()-1);
+                        string loperand = siccode_line->operands[0];
+                        string roperand = siccode_line->operands[1];
 
                         if (siccode_line->opcode_ref->register_based) {
 
@@ -124,7 +119,7 @@ void cObjectFile::print_listfile() {
         printf(" %-9s %-8s %-9s %-10s\n",
             siccode_line->label.c_str(),
             siccode_line->mnemonic.c_str(),
-            siccode_line->operand.c_str(),
+            merge_operands(siccode_line->operands).c_str(),
             siccode_line->comment.c_str());
 
         for (int j = 3; j < (int)siccode_line->object_code.size(); ++j) {

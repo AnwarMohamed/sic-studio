@@ -189,4 +189,7 @@ struct SICCodeLine {
     bool is_indexed;
     bool is_comment;
     bool is_xe4;
+
+    bool is_indirect;
+    bool is_immediate;
 };

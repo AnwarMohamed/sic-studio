@@ -220,11 +220,24 @@ bool cListFile::parse_instructions() {
                             if (siccode_line->operands[1][0] == 'X') {
                                 siccode_line->is_indexed = true;
 
-                                if (siccode_line->is_xe4) {
+                                if (siccode_line->operands[0][0] == '@') {
+                                    siccode_line->is_indirect = true;
+
                                     if (_symbols_table.count(
                                         siccode_line->operands[0].substr(
-                                        1, siccode_line->operands[0].size()-1)) 
-                                            != 1) {
+                                        1, siccode_line->operands[0].size()-1))
+                                        != 1) {
+                                        siccode_line->errors.push_back(
+                                            ERROR_UNDEFINED_SYM);
+                                    }
+                                }
+                                else if (siccode_line->operands[0][0] == '#') {
+                                    siccode_line->is_immediate = true;
+
+                                    if (_symbols_table.count(
+                                        siccode_line->operands[0].substr(
+                                        1, siccode_line->operands[0].size()-1))
+                                        != 1) {
                                         siccode_line->errors.push_back(
                                             ERROR_UNDEFINED_SYM);
                                     }
@@ -243,10 +256,21 @@ bool cListFile::parse_instructions() {
                             }
                         }
                         else if (siccode_line->operands.size() == 1) {
-                            if (_symbols_table.count(
-                                siccode_line->operands[0]) != 1) {
-                                siccode_line->errors.push_back(
-                                    ERROR_UNDEFINED_SYM);
+                            if (siccode_line->is_xe4) {
+                                if (_symbols_table.count(
+                                    siccode_line->operands[0].substr(
+                                    1, siccode_line->operands[0].size() - 1))
+                                    != 1) {
+                                    siccode_line->errors.push_back(
+                                        ERROR_UNDEFINED_SYM);
+                                }
+                            }
+                            else {
+                                if (_symbols_table.count(
+                                    siccode_line->operands[0]) != 1) {
+                                    siccode_line->errors.push_back(
+                                        ERROR_UNDEFINED_SYM);
+                                }
                             }
                         }
                         else {

@@ -82,13 +82,19 @@ cSourceFile::cSourceFile(CHAR* Filename): cFile(Filename) {
 	for (int i = 0; i < 54; ++i) {
         line = new SICCodeLine;
         line->address = 0;
-        line->operand_indexed = false;
+        line->is_indexed = false;
         line->opcode_ref = nullptr;
 		line->label = sourcelines[i][0];
 		line->mnemonic = sourcelines[i][1];
 		line->operands.push_back(sourcelines[i][2]);
 		_siccode_lines.push_back(line);
 	}
+
+    parse_sourcefile();
+}
+
+void cSourceFile::parse_sourcefile() {
+
 }
 
 cSourceFile::~cSourceFile(void) {
