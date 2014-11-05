@@ -82,9 +82,10 @@ bool cListFile::parse_instructions() {
     }
 
     if (_siccode_lines[0]->mnemonic == "START") {
-        if (is_hex_number(_siccode_lines[0]->operand)) {
-            _start_address = _current_address = 
-                hex_to_int((char*)_siccode_lines[0]->operand.c_str());
+        if (_siccode_lines[0]->operands.size() == 1 &&
+            is_hex_number(_siccode_lines[0]->operands[0])) {
+            _start_address = _current_address =
+                hex_to_int((char*)_siccode_lines[0]->operands[0].c_str());
             _siccode_lines[0]->address = _start_address;
             _start_set = true;
         }
@@ -116,7 +117,8 @@ bool cListFile::parse_instructions() {
                 siccode_line->address = _current_address;
                 _current_address += 3;
 
-                if (!is_word_str(siccode_line->operand)) {
+                if (siccode_line->operands.size() != 1 ||
+                    !is_word_str(siccode_line->operands[0])) {
                     siccode_line->errors.push_back(ERROR_ILLEGAL_WORD);
                 }
             }
@@ -125,10 +127,12 @@ bool cListFile::parse_instructions() {
             else if (siccode_line->mnemonic == "BYTE") {
                 siccode_line->address = _current_address;
 
-                if (siccode_line->operand[0] == 'C') {
-                    _current_address += (siccode_line->operand.size() - 3);
+                if (siccode_line->operands.size() == 1 &&
+                    siccode_line->operands[0][0] == 'C') {
+                    _current_address += (siccode_line->operands.size() - 3);
                 }
-                else if (siccode_line->operand[0] == 'X') {
+                else if (siccode_line->operands.size() == 1 && 
+                    siccode_line->operands[0][0] == 'X') {
                     _current_address += 1;
                 }
                 else {
@@ -140,13 +144,14 @@ bool cListFile::parse_instructions() {
             else if (siccode_line->mnemonic == "RESW") {
                 siccode_line->address = _current_address;
 
-                if (!is_word_str(siccode_line->operand)) {
+                if (siccode_line->operands.size() != 1 ||
+                    !is_word_str(siccode_line->operands[0])) {
                     siccode_line->errors.push_back(ERROR_ILLEGAL_RESW);
                     _current_address += 3;
                 }
                 else {
                     _current_address += (3 * str_to_int(
-                        (char*)siccode_line->operand.c_str()));
+                        (char*)siccode_line->operands[0].c_str()));
                 }
             }
 
@@ -154,13 +159,14 @@ bool cListFile::parse_instructions() {
             else if (siccode_line->mnemonic == "RESB") {
                 siccode_line->address = _current_address;
 
-                if (!is_word_str(siccode_line->operand)) {
+                if (siccode_line->operands.size() != 1 || 
+                    !is_word_str(siccode_line->operands[0])) {
                     siccode_line->errors.push_back(ERROR_ILLEGAL_RESB);
                     _current_address += 1;
                 }
                 else {
                     _current_address += str_to_int(
-                        (char*)siccode_line->operand.c_str());
+                        (char*)siccode_line->operands[0].c_str());
                 }
             }
 
@@ -170,7 +176,8 @@ bool cListFile::parse_instructions() {
                 _current_address += 1;
                 _end_set = true;
 
-                if (_symbols_table.count(siccode_line->operand) != 1) {
+                if (siccode_line->operands.size() != 1 ||
+                    _symbols_table.count(siccode_line->operands[0]) != 1) {
                     siccode_line->errors.push_back(ERROR_UNDEFINED_SYM);
                 }
             }
@@ -185,32 +192,38 @@ bool cListFile::parse_instructions() {
                 switch (opcode_table_it->second->operands)
                 {
                 case 0:
-                    if (siccode_line->operand.size()) {
+                    if (siccode_line->operands.size()) {
                         siccode_line->errors.push_back(
                             ERROR_ILLEGAL_OPERAND);
                     }
                     break;
                 case 1:
-                    if (siccode_line->operand.size()) {
-                        if (siccode_line->operand.find(',') != -1) {
-                            if (siccode_line->operand.find_last_of(',')
-                                != siccode_line->operand.find(',') ||
-                                siccode_line->operand.find(',') + 2
-                                != siccode_line->operand.size() ||
-                                siccode_line->operand[
-                                    siccode_line->operand.find(',') + 1]
-                                != 'X') {
+                    if (siccode_line->operands.size()) {
+                        if (siccode_line->operands.size() == 2) {
+                            if (siccode_line->operands[1][0] == 'X') {
+                                siccode_line->operand_indexed = true;
+
+                                if (_symbols_table.count(
+                                    siccode_line->operands[0]) != 1) {
+                                    siccode_line->errors.push_back(
+                                        ERROR_UNDEFINED_SYM);
+                                }
+                            }
+                            else {
                                 siccode_line->errors.push_back(
                                     ERROR_ILLEGAL_OPERAND);
                             }
-                            else {
-                                siccode_line->operand_indexed = true;
+                        }
+                        else if (siccode_line->operands.size() == 1) {
+                            if (_symbols_table.count(
+                                siccode_line->operands[0]) != 1) {
+                                siccode_line->errors.push_back(
+                                    ERROR_UNDEFINED_SYM);
                             }
                         }
-                        else if (_symbols_table.count(
-                            siccode_line->operand) != 1) {
+                        else {
                             siccode_line->errors.push_back(
-                                ERROR_UNDEFINED_SYM);
+                                ERROR_ILLEGAL_OPERAND);
                         }
                     }
                     else {
@@ -219,9 +232,12 @@ bool cListFile::parse_instructions() {
                     }
                     break;
                 case 2:
-                    if (siccode_line->operand.find_last_of(',') != -1 &&
-                        siccode_line->operand.find_last_of(',')
-                        == siccode_line->operand.find(',')) {
+                    if (siccode_line->operands.size() == 2) {
+
+                        if (siccode_line->operands[0] != "") {
+
+                        }
+
                         if (siccode_line->mnemonic == "SHIFTL" ||
                             siccode_line->mnemonic == "SHIFTR") {
 
@@ -302,13 +318,33 @@ void cListFile::print_listfile() {
             siccode_line->address,
             siccode_line->label.c_str(),
             siccode_line->mnemonic.c_str(),
-            siccode_line->operand.c_str(),
+            merge_operands(siccode_line->operands).c_str(),
             siccode_line->comment.c_str());
 
         for (int j = 0; j < (int)siccode_line->errors.size(); ++j) {
             printf(" **** %s\n", siccode_line->errors[j].c_str());
         }
     }
+}
+
+string cListFile::merge_operands(vector<string> &operands) {
+    string merged;
+
+    if (operands.size() == 0) {
+
+    }
+    else if (operands.size() == 1) {
+        merged = operands[0];
+    }
+    else {
+        for (int i = 0; i < operands.size(); ++i) {
+            if (i != 0) {
+                merged += ",";
+            }
+            merged += operands[i];
+        }
+    }
+    return merged;
 }
 
 cListFile::~cListFile() {

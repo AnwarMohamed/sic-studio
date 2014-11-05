@@ -43,6 +43,7 @@ private:
     bool is_hex_number(string& str);
     bool is_word_str(string& str);
     bool is_alpha(string& str);
+    string merge_operands(vector<string> &operands);
     void construct_symbol_table();
     bool parse_instructions();
 

@@ -182,9 +182,10 @@ struct SICCodeLine {
     string label;
     string mnemonic;
     SICOpCode* opcode_ref;
-    string operand;
+    vector<string> operands;
     string comment;
     vector<char> object_code;
     vector<string> errors;
     bool operand_indexed;
+    bool is_comment;
 };

@@ -86,7 +86,7 @@ cSourceFile::cSourceFile(CHAR* Filename): cFile(Filename) {
         line->opcode_ref = nullptr;
 		line->label = sourcelines[i][0];
 		line->mnemonic = sourcelines[i][1];
-		line->operand = sourcelines[i][2];
+		line->operands.push_back(sourcelines[i][2]);
 		_siccode_lines.push_back(line);
 	}
 }
