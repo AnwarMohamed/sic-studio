@@ -1,10 +1,12 @@
 #pragma once
 #include "cListFile.h"
 
-class cObjectFile: public cListFile
-{
+class cObjectFile: public cListFile {
 public:
-    cObjectFile(CHAR* Filename);
+    cObjectFile(char* filename);
     ~cObjectFile();
+
+private:
+    void generate_object_code();
 };
 

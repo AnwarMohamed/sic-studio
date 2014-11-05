@@ -31,11 +31,11 @@ cListFile::cListFile(char* filename) : cSourceFile(filename) {
     _end_set = false;
     _start_set = false;
 
-    ListFileOpCode* opcode;
+    SICOpCode* opcode;
     for (int i = 0; i < 59; ++i)
     {
-        opcode = new ListFileOpCode;
-        zero(opcode, sizeof(ListFileOpCode));
+        opcode = new SICOpCode;
+        zero(opcode, sizeof(SICOpCode));
 
         opcode->mnemonic = opcodes_mnemonic[i];
         opcode->opcode = opcodes_format[i][0];
@@ -92,7 +92,7 @@ bool cListFile::parse_instructions() {
         _siccode_lines[0]->errors.push_back(ERROR_MISSING_START);
     }
 
-    map<string, ListFileOpCode*>::iterator opcode_table_it;
+    map<string, SICOpCode*>::iterator opcode_table_it;
     SICCodeLine* siccode_line;
 
     for (int i = _start_set?1:0; i < (int)_siccode_lines.size(); ++i) {
@@ -173,6 +173,7 @@ bool cListFile::parse_instructions() {
             else if ((opcode_table_it = _opcodes_table.find(
                 siccode_line->mnemonic)) != _opcodes_table.end()) {
                 siccode_line->address = _current_address;
+                siccode_line->opcode_ref = opcode_table_it->second;
                 _current_address += 3;
 
                 switch (opcode_table_it->second->operands)
