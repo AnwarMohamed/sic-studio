@@ -27,6 +27,7 @@
 
 #define ERROR_MISSING_OPCODE  "missing operation code"
 #define ERROR_UNRECOG_OPCODE  "unrecognized operation code"
+#define ERROR_ILLEGAL_OPCODE  "illegal operation code format"
 #define ERROR_MISSING_OPERAND "missing or misplaced operand in mnemonic"
 #define ERROR_ILLEGAL_OPERAND "illegal operand in mnemonic"
 #define ERROR_UNDEFINED_SYM   "undefined symbol in operand"
@@ -184,10 +185,26 @@ bool cListFile::parse_instructions() {
 
             /* Handling Opcodes */
             else if ((opcode_table_it = _opcodes_table.find(
-                siccode_line->mnemonic)) != _opcodes_table.end()) {
+                siccode_line->mnemonic)) != _opcodes_table.end() ||
+                (siccode_line->mnemonic.size() &&
+                    siccode_line->mnemonic[0] == '+' &&
+                        (opcode_table_it = _opcodes_table.find(
+                        siccode_line->mnemonic.substr(1, 
+                        siccode_line->mnemonic.size()-1))) 
+                                        != _opcodes_table.end())) {
+
+                if (siccode_line->mnemonic[0] == '+') {
+                    siccode_line->is_xe4 = true;
+                }
+
                 siccode_line->address = _current_address;
                 siccode_line->opcode_ref = opcode_table_it->second;
                 _current_address += 3;
+
+                if (!(siccode_line->is_xe4 &&
+                    siccode_line->opcode_ref->format == 3)) {
+                    siccode_line->errors.push_back(ERROR_ILLEGAL_OPCODE);
+                }
 
                 switch (opcode_table_it->second->operands)
                 {
@@ -201,12 +218,23 @@ bool cListFile::parse_instructions() {
                     if (siccode_line->operands.size()) {
                         if (siccode_line->operands.size() == 2) {
                             if (siccode_line->operands[1][0] == 'X') {
-                                siccode_line->operand_indexed = true;
+                                siccode_line->is_indexed = true;
 
-                                if (_symbols_table.count(
-                                    siccode_line->operands[0]) != 1) {
-                                    siccode_line->errors.push_back(
-                                        ERROR_UNDEFINED_SYM);
+                                if (siccode_line->is_xe4) {
+                                    if (_symbols_table.count(
+                                        siccode_line->operands[0].substr(
+                                        1, siccode_line->operands[0].size()-1)) 
+                                            != 1) {
+                                        siccode_line->errors.push_back(
+                                            ERROR_UNDEFINED_SYM);
+                                    }
+                                }
+                                else {
+                                    if (_symbols_table.count(
+                                        siccode_line->operands[0]) != 1) {
+                                        siccode_line->errors.push_back(
+                                            ERROR_UNDEFINED_SYM);
+                                    }
                                 }
                             }
                             else {
@@ -287,10 +315,16 @@ bool cListFile::is_numeric(string& str) {
 }
 
 bool cListFile::is_alpha(string& str) {
-    for (int i = 0; i < (int)str.size(); ++i)
-    if (!isalpha(str[i]))
-        return false;
-    return true;
+    bool has_alpha = false;
+    for (int i = 0; i < (int)str.size(); ++i) {
+        if (i == 0 && isdigit(str[i]))
+            return false;
+        if (!isalnum(str[i]))
+            return false;
+        if (isalpha(str[i]))
+            has_alpha = true;
+    }
+    return has_alpha;
 }
 
 bool cListFile::is_hex_number(string& str) {
@@ -337,7 +371,7 @@ string cListFile::merge_operands(vector<string> &operands) {
         merged = operands[0];
     }
     else {
-        for (int i = 0; i < operands.size(); ++i) {
+        for (int i = 0; i < (int)operands.size(); ++i) {
             if (i != 0) {
                 merged += ",";
             }
