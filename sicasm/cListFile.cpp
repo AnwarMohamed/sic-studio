@@ -203,6 +203,9 @@ bool cListFile::parse_instructions() {
                                 siccode_line->errors.push_back(
                                     ERROR_ILLEGAL_OPERAND);
                             }
+                            else {
+                                siccode_line->operand_indexed = true;
+                            }
                         }
                         else if (_symbols_table.count(
                             siccode_line->operand) != 1) {

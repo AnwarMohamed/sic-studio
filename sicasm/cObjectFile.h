@@ -27,6 +27,8 @@ public:
     ~cObjectFile();
 
     void print_listfile();
+    void print_objectfile();
+    void generate_objectfile();
 
 private:
     void generate_object_code();

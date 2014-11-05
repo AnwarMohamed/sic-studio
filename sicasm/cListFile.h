@@ -1,5 +1,3 @@
-#pragma once
-#include "sicasm.h"
 /*
 *
 *  Copyright (C) 2014  Anwar Mohamed <anwarelmakrahy[at]gmail.com>
@@ -20,6 +18,8 @@
 *
 */
 
+#pragma once
+#include "sicasm.h"
 #include "cSourceFile.h"
 
 using namespace std;
@@ -33,7 +33,7 @@ public:
 
 private:
     bool parse_siccode_lines();
-    int hex_to_int(char* hex);
+    
 
     bool _end_set;
     bool _start_set;
@@ -51,5 +51,6 @@ protected:
     map<string, int> _symbols_table;
 
     int str_to_int(char* str);
+    int hex_to_int(char* hex);
 };
 
