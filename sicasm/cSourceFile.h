@@ -27,6 +27,7 @@ public:
 
 protected:
     vector<SICCodeLine*> _siccode_lines;
+    map<string, SICOpCode*> _opcodes_table;
 
 private:
     void SplitWords();

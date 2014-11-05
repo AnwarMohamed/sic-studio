@@ -29,7 +29,6 @@ private:
 protected:
     int _start_address;
     map<string, int> _symbols_table;
-    map<string, SICOpCode*> _opcodes_table;
 
     int str_to_int(char* str);
 };
