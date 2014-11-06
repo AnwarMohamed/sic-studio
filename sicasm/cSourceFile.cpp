@@ -54,8 +54,9 @@ void cSourceFile::parse_sourcefile() {
     SICCodeLine* line;
 
     for (int i = 0; i < (int)FileLength-1;) {
-        if (ptr[i] == '\r' && ptr[i + 1] == '\n' || ptr[i] == '\n') {            
-            _sourcefile_line = string(lptr, &ptr[i] - lptr);
+        if (ptr[i] == '\r' && ptr[i + 1] == '\n' || ptr[i] == '\n' ||
+            i + 2 == FileLength) {
+            _sourcefile_line = string(lptr, &ptr[(i + 2 == FileLength)? i+2: i] - lptr);
             transform(_sourcefile_line.begin(), _sourcefile_line.end(), 
                 _sourcefile_line.begin(), ::toupper);
             
@@ -130,30 +131,30 @@ void cSourceFile::split_strings(SICCodeLine* line, string &str, bool skip) {
             if (find_result != string::npos) {
                 
                 if (skip) {
-                    line->comment = str.substr(last_result, str.size() - 1);
+                    line->comment = str.substr(last_result, str.size() - last_result);
                 }
                 else {
-                    operands = str.substr(last_result, find_result - 1);
+                    operands = str.substr(last_result, find_result - last_result);
 
                     last_result = find_result + 1;
-                    line->comment = str.substr(last_result, str.size() - 1);
+                    line->comment = str.substr(last_result, str.size() - last_result);
                 }
             }
             else {                
                 if (skip) {
-                    line->comment = str.substr(last_result, str.size() - 1);
+                    line->comment = str.substr(last_result, str.size() - last_result);
                 }
                 else {
-                    operands = str.substr(last_result, str.size() - 1);
+                    operands = str.substr(last_result, str.size() - last_result);
                 }
             }
         }
         else {
             if (skip) {
-                operands = str.substr(last_result, str.size() - 1);
+                operands = str.substr(last_result, str.size() - last_result);
             }
             else {
-                line->mnemonic = str.substr(last_result, str.size() - 1);
+                line->mnemonic = str.substr(last_result, str.size() - last_result);
             }
         }
     }
@@ -179,14 +180,14 @@ void cSourceFile::split_strings(SICCodeLine* line, string &str, bool skip) {
                 last_result = find_result + 1;
                 find_result = operands.find('\'', last_result);
                 if (find_result != string::npos) {
-                    line->operands.push_back(operands.substr(0, find_result));
+                    line->operands.push_back(operands.substr(0, find_result+1));
 
                     if (find_result + 1 == operands.size()) {
                         line->comment.clear();
                     }
                     else {
                         line->comment = operands.substr(
-                            find_result + 1, operands.size() - find_result);
+                            find_result + 1, operands.size() - find_result - 1);
                     }
                 }
                 else {
@@ -195,15 +196,22 @@ void cSourceFile::split_strings(SICCodeLine* line, string &str, bool skip) {
                 }
             }
         }
+        else {
+            line->operands.push_back(operands);
+        }
     }
 
     else if (operands.size()) {
-        if (operands.find(',', last_result) != string::npos) {
-            last_result = 0;
-            while (find_result = operands.find(',', last_result) != string::npos) {
-                line->operands.push_back(operands.substr(last_result, find_result - last_result));
+        last_result = 0;
+        if (operands.find(',', last_result) != string::npos) {       
+            while ((find_result = operands.find(',', last_result)) 
+                != string::npos) {
+                line->operands.push_back(operands.substr(
+                    last_result, find_result - last_result));
                 last_result = find_result + 1;
             }
+            line->operands.push_back(operands.substr(
+                last_result, operands.size() - last_result));
         }
         else {
             line->operands.push_back(operands);

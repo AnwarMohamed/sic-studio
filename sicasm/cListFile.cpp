@@ -208,8 +208,8 @@ bool cListFile::parse_instructions() {
                 siccode_line->opcode_ref = opcode_table_it->second;
                 _current_address += 3;
 
-                if (!(siccode_line->is_xe4 &&
-                    siccode_line->opcode_ref->format == 3)) {
+                if (siccode_line->is_xe4 &&
+                    siccode_line->opcode_ref->format != 3) {
                     siccode_line->errors.push_back(ERROR_ILLEGAL_OPCODE);
                 }
 
