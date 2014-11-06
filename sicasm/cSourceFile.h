@@ -20,16 +20,17 @@ public:
     cSourceFile(char* filename);
     ~cSourceFile();
 
-    void StartPass1();
-    void StartPass2();
-
-	BOOL is_ready;
+	bool is_ready;
 
 protected:
     vector<SICCodeLine*> _siccode_lines;
     map<string, SICOpCode*> _opcodes_table;
 
 private:
-    void SplitWords();
+    void parse_sourcefile();
+    string _sourcefile_line;
+
+    void trim_string(string &str);
+    void split_strings(SICCodeLine* line, string &str, bool skip = false);
 };
 
