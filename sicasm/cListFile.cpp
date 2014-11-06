@@ -129,11 +129,18 @@ bool cListFile::parse_instructions() {
                 siccode_line->address = _current_address;
 
                 if (siccode_line->operands.size() == 1 &&
-                    siccode_line->operands[0][0] == 'C') {
+                    siccode_line->operands[0].size() >= 3 &&
+                    siccode_line->operands[0][0] == 'C' &&
+                    siccode_line->operands[0][1] == '\'' &&
+                    siccode_line->operands[0][
+                        siccode_line->operands[0].size() - 1] == '\'') {
                     _current_address += (siccode_line->operands.size() - 3);
                 }
-                else if (siccode_line->operands.size() == 1 && 
-                    siccode_line->operands[0][0] == 'X') {
+                else if (siccode_line->operands.size() == 1 &&
+                    siccode_line->operands[0].size() == 5 &&
+                    siccode_line->operands[0][0] == 'X' &&
+                    siccode_line->operands[0][1] == '\'' &&
+                    siccode_line->operands[0][4] == '\'') {
                     _current_address += 1;
                 }
                 else {
