@@ -32,7 +32,7 @@ cSourceFile::cSourceFile(char* filename): cFile(filename) {
     }
 
     SICOpCode* opcode;
-    for (int i = 0; i < 59; ++i)
+    for (int i = 0; i < OPCODES_SIZE; ++i)
     {
         opcode = new SICOpCode;
         zero(opcode, sizeof(SICOpCode));
@@ -54,13 +54,16 @@ void cSourceFile::parse_sourcefile() {
     SICCodeLine* line;
 
     for (int i = 0; i < (int)FileLength-1;) {
-        if (ptr[i] == '\r' && ptr[i + 1] == '\n' || ptr[i] == '\n' ||
+        if ((ptr[i] == '\r' && ptr[i + 1] == '\n') || ptr[i] == '\n' ||
             i + 2 == FileLength) {
-            _sourcefile_line = string(lptr, &ptr[(i + 2 == FileLength)? i+2: i] - lptr);
-            transform(_sourcefile_line.begin(), _sourcefile_line.end(), 
+            _sourcefile_line = 
+                string(lptr, &ptr[((i+2) == FileLength)? i+2: i] - lptr);
+
+            transform(_sourcefile_line.begin(), _sourcefile_line.end(),
                 _sourcefile_line.begin(), ::toupper);
             
             trim_string(_sourcefile_line);
+
             line = new SICCodeLine;
             zero(line, sizeof(SICCodeLine));
 
@@ -75,7 +78,7 @@ void cSourceFile::parse_sourcefile() {
 
 
             if (label_word[0] == '.') {
-                line->label = _sourcefile_line;
+                line->comment = _sourcefile_line;
                 line->is_comment = true;
             }
             else if (label_word[0] == '+') {
@@ -87,15 +90,18 @@ void cSourceFile::parse_sourcefile() {
                     split_strings(line, _sourcefile_line);
                 }
             }
-            else if (_opcodes_table.count(label_word) == 1) {
+            else if (_opcodes_table.count(label_word) == 1 ||
+                label_word == "END" || label_word == "START" ||
+                label_word == "RESW" || label_word == "RESB" ||
+                label_word == "BYTE" || label_word == "WORD") {
                 split_strings(line, _sourcefile_line, true);
             }
             else {
                 split_strings(line, _sourcefile_line);
             }
 
-            _siccode_lines.push_back(line);
-            lptr = &ptr[(i += 2)];
+            _siccode_lines.push_back(line);            
+            lptr = &ptr[(i += (ptr[i] == '\n'? 1: 2))];
         }
         else {
             ++i;
@@ -119,7 +125,16 @@ void cSourceFile::split_strings(SICCodeLine* line, string &str, bool skip) {
         find_result = str.find(' ', last_result);
         if (find_result != string::npos) {
             if (skip) {
-                operands = str.substr(last_result, find_result - last_result);
+                if (_opcodes_table.count(line->mnemonic) &&
+                    _opcodes_table[line->mnemonic]->operands == 0) {
+                    line->comment = 
+                        str.substr(last_result, str.size() - last_result);
+                    return;
+                }
+                else {
+                    operands =
+                        str.substr(last_result, find_result - last_result);
+                }
             }
             else {
                 line->mnemonic =
@@ -131,30 +146,61 @@ void cSourceFile::split_strings(SICCodeLine* line, string &str, bool skip) {
             if (find_result != string::npos) {
                 
                 if (skip) {
-                    line->comment = str.substr(last_result, str.size() - last_result);
+                    line->comment = 
+                        str.substr(last_result, str.size() - last_result);
                 }
                 else {
-                    operands = str.substr(last_result, find_result - last_result);
+                    if (_opcodes_table.count(line->mnemonic) &&
+                        _opcodes_table[line->mnemonic]->operands == 0) {
+                        line->comment =
+                            str.substr(last_result, str.size() - last_result);
+                        return;
+                    }
+                    else {
+                        operands =
+                            str.substr(last_result, find_result - last_result);
+                    }
 
                     last_result = find_result + 1;
-                    line->comment = str.substr(last_result, str.size() - last_result);
+                    line->comment = 
+                        str.substr(last_result, str.size() - last_result);
                 }
             }
             else {                
                 if (skip) {
-                    line->comment = str.substr(last_result, str.size() - last_result);
+                    line->comment = 
+                        str.substr(last_result, str.size() - last_result);
                 }
                 else {
-                    operands = str.substr(last_result, str.size() - last_result);
+                    if (_opcodes_table.count(line->mnemonic) &&
+                        _opcodes_table[line->mnemonic]->operands == 0) {
+                        line->comment =
+                            str.substr(last_result, str.size() - last_result);
+                        return;
+                    }
+                    else {
+                        operands =
+                            str.substr(last_result, str.size() - last_result);
+                    }
                 }
             }
         }
         else {
             if (skip) {
-                operands = str.substr(last_result, str.size() - last_result);
+                if (_opcodes_table.count(line->mnemonic) &&
+                    _opcodes_table[line->mnemonic]->operands == 0) {
+                    line->comment =
+                        str.substr(last_result, str.size() - last_result);
+                    return;
+                }
+                else {
+                    operands = 
+                        str.substr(last_result, str.size() - last_result);
+                }
             }
             else {
-                line->mnemonic = str.substr(last_result, str.size() - last_result);
+                line->mnemonic = 
+                    str.substr(last_result, str.size() - last_result);
             }
         }
     }
@@ -180,14 +226,16 @@ void cSourceFile::split_strings(SICCodeLine* line, string &str, bool skip) {
                 last_result = find_result + 1;
                 find_result = operands.find('\'', last_result);
                 if (find_result != string::npos) {
-                    line->operands.push_back(operands.substr(0, find_result+1));
+                    line->operands.push_back(
+                        operands.substr(0, find_result+1));
 
                     if (find_result + 1 == operands.size()) {
                         line->comment.clear();
                     }
                     else {
                         line->comment = operands.substr(
-                            find_result + 1, operands.size() - find_result - 1);
+                            find_result + 1, 
+                            operands.size() - find_result - 1);
                     }
                 }
                 else {
@@ -235,6 +283,10 @@ void cSourceFile::trim_string(string &str) {
         else {
             ++i;
         }
+    }
+
+    if (str.size() && str[str.size() - 1] == '\n') {
+        str = str.erase(str.size()-1, 1);
     }
 }
 

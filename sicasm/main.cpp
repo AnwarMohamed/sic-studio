@@ -3,7 +3,9 @@
 
 INT main(INT argc, CHAR* argv[])
 {
-    cObjectFile list("D:\\College\\systems\\labs\\lab2a.sicasm");
+    //cObjectFile list("C:\\Users\\Anwar Mohamed\\Desktop\\SICXE Simulator\\systems\\Labs\\SICBOOT.ASM");
+    //cListFile list("C:\\Users\\Anwar Mohamed\\Desktop\\SICXE Simulator\\systems\\Labs\\SICBOOT.ASM");
+    cListFile list("D:\\College\\systems\\labs\\quiz1.sicasm");
     list.print_listfile();
     system("PAUSE");
     return 0;

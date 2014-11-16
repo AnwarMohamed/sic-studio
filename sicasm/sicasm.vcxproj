@@ -88,7 +88,11 @@
     <ClInclude Include="cListFile.h" />
     <ClInclude Include="cObjectFile.h" />
     <ClInclude Include="cSourceFile.h" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="sicasm.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="version.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -38,7 +38,8 @@ using namespace std;
 #endif
 #endif
 
-static char* opcodes_mnemonic[59] = {
+#define OPCODES_SIZE 59
+static char* opcodes_mnemonic[OPCODES_SIZE] = {
     "ADD",
     "ADDF",
     "ADDR",

@@ -46,6 +46,7 @@
 #define ERROR_ILLEGAL_BYTE    "illegal operand in byte statement"
 #define ERROR_DUPLICATE_LABEL "duplicate label definition"
 #define ERROR_ILLEGAL_LABEL   "illegal format in label field"
+#define ERROR_SUGGEST         "do you mean"
 
 
 cListFile::cListFile(char* filename) : cSourceFile(filename) {
@@ -98,6 +99,12 @@ bool cListFile::parse_instructions() {
     else {
         _start_address = _current_address = 0;
         _siccode_lines[0]->errors.push_back(ERROR_MISSING_START);
+
+        if (_siccode_lines[0]->mnemonic == "STAR" ||
+            _siccode_lines[0]->mnemonic == "TART" ||
+            _siccode_lines[0]->mnemonic == "STRT") {
+            _siccode_lines[0]->errors.push_back(suggest_operation("START"));
+        }        
     }
 
     map<string, SICOpCode*>::iterator opcode_table_it;
@@ -134,14 +141,16 @@ bool cListFile::parse_instructions() {
                     siccode_line->operands[0][1] == '\'' &&
                     siccode_line->operands[0][
                         siccode_line->operands[0].size() - 1] == '\'') {
-                    _current_address += (siccode_line->operands.size() - 3);
+                    _current_address += (siccode_line->operands.size()-3);
                 }
                 else if (siccode_line->operands.size() == 1 &&
-                    siccode_line->operands[0].size() == 5 &&
+                    siccode_line->operands[0].size() >= 5 &&
+                    siccode_line->operands[0].size() % 2 == 1 &&
                     siccode_line->operands[0][0] == 'X' &&
                     siccode_line->operands[0][1] == '\'' &&
-                    siccode_line->operands[0][4] == '\'') {
-                    _current_address += 1;
+                    siccode_line->operands[0][
+                        siccode_line->operands[0].size() - 1] == '\'') {
+                    _current_address += (siccode_line->operands[0].size()-3)/2;
                 }
                 else {
                     siccode_line->errors.push_back(ERROR_ILLEGAL_BYTE);
@@ -187,6 +196,20 @@ bool cListFile::parse_instructions() {
                 if (siccode_line->operands.size() != 1 ||
                     _symbols_table.count(siccode_line->operands[0]) != 1) {
                     siccode_line->errors.push_back(ERROR_UNDEFINED_SYM);
+
+                    if (_start_set){
+                        for (map<string, int>::iterator j = _symbols_table.begin();
+                            j != _symbols_table.end(); ++j) {
+                            if (_siccode_lines[j->second]->mnemonic == "START" &&
+                                _siccode_lines[j->second]->label.size()) {
+                                siccode_line->errors.push_back(
+                                    suggest_operation(
+                                    _siccode_lines[j->second]->label));
+                                break;
+                            }
+                        }
+                    }
+
                 }
             }
 
@@ -249,6 +272,10 @@ bool cListFile::parse_instructions() {
                                             ERROR_UNDEFINED_SYM);
                                     }
                                 }
+                                else if (is_hex_number(
+                                    siccode_line->operands[0])) {
+
+                                }
                                 else {
                                     if (_symbols_table.count(
                                         siccode_line->operands[0]) != 1) {
@@ -271,6 +298,18 @@ bool cListFile::parse_instructions() {
                                     siccode_line->errors.push_back(
                                         ERROR_UNDEFINED_SYM);
                                 }
+                            }
+                            else if (is_hex_number(
+                                siccode_line->operands[0])) {
+
+                            }
+                            else if (siccode_line->operands[0][0] == '#' &&
+                                is_word_str(siccode_line->operands[0].substr(
+                                1, siccode_line->operands[0].size() - 1))) {
+
+                            }
+                            else if (siccode_line->operands[0][0] == '@') {
+
                             }
                             else {
                                 if (_symbols_table.count(
@@ -317,6 +356,44 @@ bool cListFile::parse_instructions() {
             else {
                 siccode_line->address = _current_address;
                 siccode_line->errors.push_back(ERROR_UNRECOG_OPCODE);
+
+                if (siccode_line->mnemonic == "ND" ||
+                    siccode_line->mnemonic == "EN") {
+                    siccode_line->errors.push_back(suggest_operation("END"));
+                }
+                else if (starts_with(siccode_line->mnemonic, "RES") ||
+                    starts_with(siccode_line->mnemonic, "RS") || 
+                    starts_with(siccode_line->mnemonic, "ES") ||
+                    starts_with(siccode_line->mnemonic, "RE")) {
+                    siccode_line->errors.push_back(suggest_operation("RESW\' or \'RESB"));
+                }
+                else if (starts_with(siccode_line->mnemonic, "ORD") ||
+                    starts_with(siccode_line->mnemonic, "WRD") ||
+                    starts_with(siccode_line->mnemonic, "WOR")) {
+                    siccode_line->errors.push_back(suggest_operation("WORD"));
+                }
+                else if (starts_with(siccode_line->mnemonic, "YTE") ||
+                    starts_with(siccode_line->mnemonic, "BYT") ||
+                    starts_with(siccode_line->mnemonic, "BTE")) {
+                    siccode_line->errors.push_back(suggest_operation("BYTE"));
+                }
+                else if (starts_with(siccode_line->mnemonic, "YTE") ||
+                    starts_with(siccode_line->mnemonic, "BYT") ||
+                    starts_with(siccode_line->mnemonic, "BTE")) {
+                    siccode_line->errors.push_back(suggest_operation("BYTE"));
+                }
+                else if (_start_set)    {
+                    for (int j = 0; j < OPCODES_SIZE; ++j) {
+                        if (starts_with(opcodes_mnemonic[j],
+                            siccode_line->mnemonic) ||
+                            starts_with(siccode_line->mnemonic,
+                            opcodes_mnemonic[j])) {
+                            siccode_line->errors.push_back(
+                                suggest_operation(opcodes_mnemonic[j]));
+                            break;
+                        }
+                    }
+                }
             }
 
             /* Handling Instructions after END statement */
@@ -327,6 +404,24 @@ bool cListFile::parse_instructions() {
     }
 
     return true;
+}
+
+bool cListFile::starts_with(const string& original, const string& checkable) {
+    if (checkable.length() > original.length()) {
+        return false;
+    }
+
+    for (int i = 0; i < (int)checkable.length(); ++i) {
+        if (checkable[i] != original[i]) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+string cListFile::suggest_operation(string operation) {
+    return string(ERROR_SUGGEST) + " \'" + operation + "\'?";
 }
 
 bool cListFile::parse_siccode_lines() {
@@ -379,15 +474,20 @@ void cListFile::print_listfile() {
     for (int i = 0; i < (int)_siccode_lines.size(); ++i) {
         siccode_line = _siccode_lines[i];
 
-        printf("%04x %-9s %-8s %-9s %-10s\n",
-            siccode_line->address,
-            siccode_line->label.c_str(),
-            siccode_line->mnemonic.c_str(),
-            merge_operands(siccode_line->operands).c_str(),
-            siccode_line->comment.c_str());
+        if (siccode_line->is_comment) {
+            printf("     %s\n", siccode_line->comment.c_str());
+        }
+        else {
+            printf("%04X %-8s %-7s %-18s %s\n",
+                siccode_line->address,
+                siccode_line->label.c_str(),
+                siccode_line->mnemonic.c_str(),
+                merge_operands(siccode_line->operands).c_str(),
+                siccode_line->comment.c_str());
 
-        for (int j = 0; j < (int)siccode_line->errors.size(); ++j) {
-            printf(" **** %s\n", siccode_line->errors[j].c_str());
+            for (int j = 0; j < (int)siccode_line->errors.size(); ++j) {
+                printf(" **** %s\n", siccode_line->errors[j].c_str());
+            }
         }
     }
 }
