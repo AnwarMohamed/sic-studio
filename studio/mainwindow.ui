@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>500</width>
-    <height>400</height>
+    <width>730</width>
+    <height>719</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -21,15 +21,84 @@
   </property>
   <property name="windowIcon">
    <iconset resource="resources.qrc">
-    <normaloff>:/images/package_code.ico</normaloff>:/images/package_code.ico</iconset>
+    <normaloff>:/images/icon.png</normaloff>:/images/icon.png</iconset>
   </property>
-  <widget class="QWidget" name="centralWidget"/>
+  <widget class="QWidget" name="centralWidget">
+   <widget class="QFrame" name="asmFrame">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>731</width>
+      <height>651</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::Box</enum>
+    </property>
+    <property name="frameShadow">
+     <enum>QFrame::Raised</enum>
+    </property>
+    <widget class="QSplitter" name="mainSplitter">
+     <property name="geometry">
+      <rect>
+       <x>2</x>
+       <y>2</y>
+       <width>341</width>
+       <height>441</height>
+      </rect>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Vertical</enum>
+     </property>
+     <property name="handleWidth">
+      <number>3</number>
+     </property>
+     <widget class="QSplitter" name="codeSplitter">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="handleWidth">
+       <number>3</number>
+      </property>
+      <widget class="QPlainTextEdit" name="plainTextEdit"/>
+      <widget class="QSplitter" name="registersSplitter">
+       <property name="orientation">
+        <enum>Qt::Vertical</enum>
+       </property>
+       <property name="handleWidth">
+        <number>3</number>
+       </property>
+       <widget class="QListView" name="listView"/>
+       <widget class="QListWidget" name="listWidget">
+        <property name="frameShape">
+         <enum>QFrame::HLine</enum>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Sunken</enum>
+        </property>
+       </widget>
+      </widget>
+     </widget>
+     <widget class="QSplitter" name="outputSplitter">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <property name="handleWidth">
+       <number>3</number>
+      </property>
+      <widget class="QListView" name="listView_2"/>
+      <widget class="QPlainTextEdit" name="plainTextEdit_2"/>
+     </widget>
+    </widget>
+   </widget>
+  </widget>
   <widget class="QMenuBar" name="menuBar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>500</width>
+     <width>730</width>
      <height>21</height>
     </rect>
    </property>
@@ -37,6 +106,23 @@
     <property name="title">
      <string>File</string>
     </property>
+    <widget class="QMenu" name="menuNew">
+     <property name="title">
+      <string>New</string>
+     </property>
+     <addaction name="actionAssembly_File_2"/>
+    </widget>
+    <widget class="QMenu" name="menuOpen">
+     <property name="title">
+      <string>Open</string>
+     </property>
+     <addaction name="separator"/>
+     <addaction name="actionAssembly_File"/>
+     <addaction name="actionObject_File"/>
+    </widget>
+    <addaction name="menuNew"/>
+    <addaction name="menuOpen"/>
+    <addaction name="actionQuit"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="title">
@@ -62,6 +148,9 @@
     <property name="title">
      <string>Help</string>
     </property>
+    <addaction name="actionUser_Manual"/>
+    <addaction name="separator"/>
+    <addaction name="actionAbout"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
@@ -77,14 +166,177 @@
    <property name="allowedAreas">
     <set>Qt::TopToolBarArea</set>
    </property>
+   <property name="iconSize">
+    <size>
+     <width>16</width>
+     <height>16</height>
+    </size>
+   </property>
    <attribute name="toolBarArea">
     <enum>TopToolBarArea</enum>
    </attribute>
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="actionOpen"/>
+   <addaction name="actionNew"/>
+   <addaction name="actionSave"/>
+   <addaction name="separator"/>
+   <addaction name="actionDebug"/>
+   <addaction name="actionRun"/>
+   <addaction name="separator"/>
+   <addaction name="actionResume"/>
+   <addaction name="actionPause"/>
+   <addaction name="actionStop"/>
+   <addaction name="separator"/>
+   <addaction name="actionStep_Into"/>
+   <addaction name="actionStep_Over"/>
+   <addaction name="actionStep_Return"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
+  <action name="actionUser_Manual">
+   <property name="text">
+    <string>User Manual</string>
+   </property>
+  </action>
+  <action name="actionAbout">
+   <property name="text">
+    <string>About</string>
+   </property>
+  </action>
+  <action name="actionNew_Assembly_File">
+   <property name="text">
+    <string>New Assembly File</string>
+   </property>
+  </action>
+  <action name="actionAssembly_File">
+   <property name="text">
+    <string>Assembly File</string>
+   </property>
+  </action>
+  <action name="actionObject_File">
+   <property name="text">
+    <string>Object File</string>
+   </property>
+  </action>
+  <action name="actionQuit">
+   <property name="text">
+    <string>Quit</string>
+   </property>
+  </action>
+  <action name="actionAssembly_File_2">
+   <property name="text">
+    <string>Assembly File</string>
+   </property>
+  </action>
+  <action name="actionOpen">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/fldr_obj.gif</normaloff>:/images/fldr_obj.gif</iconset>
+   </property>
+   <property name="text">
+    <string>Open</string>
+   </property>
+  </action>
+  <action name="actionNew">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/new_untitled_text_file.gif</normaloff>:/images/new_untitled_text_file.gif</iconset>
+   </property>
+   <property name="text">
+    <string>New</string>
+   </property>
+  </action>
+  <action name="actionSave">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/save_edit.gif</normaloff>:/images/save_edit.gif</iconset>
+   </property>
+   <property name="text">
+    <string>Save</string>
+   </property>
+  </action>
+  <action name="actionBuild">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/build_exec.gif</normaloff>:/images/build_exec.gif</iconset>
+   </property>
+   <property name="text">
+    <string>Build</string>
+   </property>
+  </action>
+  <action name="actionDebug">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/debug_exc.gif</normaloff>:/images/debug_exc.gif</iconset>
+   </property>
+   <property name="text">
+    <string>Debug</string>
+   </property>
+  </action>
+  <action name="actionRun">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/lrun_obj.gif</normaloff>:/images/lrun_obj.gif</iconset>
+   </property>
+   <property name="text">
+    <string>Run</string>
+   </property>
+  </action>
+  <action name="actionResume">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/resume_co.gif</normaloff>:/images/resume_co.gif</iconset>
+   </property>
+   <property name="text">
+    <string>Resume</string>
+   </property>
+  </action>
+  <action name="actionPause">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/pause.gif</normaloff>:/images/pause.gif</iconset>
+   </property>
+   <property name="text">
+    <string>Pause</string>
+   </property>
+  </action>
+  <action name="actionStop">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/nav_stop.gif</normaloff>:/images/nav_stop.gif</iconset>
+   </property>
+   <property name="text">
+    <string>Stop</string>
+   </property>
+  </action>
+  <action name="actionStep_Into">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/stepinto_co.gif</normaloff>:/images/stepinto_co.gif</iconset>
+   </property>
+   <property name="text">
+    <string>Step Into</string>
+   </property>
+  </action>
+  <action name="actionStep_Over">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/stepover_co.gif</normaloff>:/images/stepover_co.gif</iconset>
+   </property>
+   <property name="text">
+    <string>Step Over</string>
+   </property>
+  </action>
+  <action name="actionStep_Return">
+   <property name="icon">
+    <iconset resource="resources.qrc">
+     <normaloff>:/images/stepreturn_co.gif</normaloff>:/images/stepreturn_co.gif</iconset>
+   </property>
+   <property name="text">
+    <string>Step Return</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
  <resources>

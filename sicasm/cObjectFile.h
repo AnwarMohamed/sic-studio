@@ -21,7 +21,7 @@
 #pragma once
 #include "cListFile.h"
 
-class cObjectFile: public cListFile {
+class DLLEXPORT cObjectFile : public cListFile {
 public:
     cObjectFile(char* filename);
     ~cObjectFile();

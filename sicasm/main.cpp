@@ -1,9 +1,10 @@
-#include "sicasm.h"
-#include "cSourceFile.h"
+#include "../sicasm/sicasm.h"
+#include "../sicasm/cObjectFile.h"
 
 INT main(INT argc, CHAR* argv[])
 {
-    cSourceFile list("D:\\College\\systems\\labs\\lab1a.sicasm");
+    cObjectFile list("D:\\College\\systems\\labs\\lab2a.sicasm");
+    list.print_listfile();
     system("PAUSE");
     return 0;
 }

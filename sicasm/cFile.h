@@ -1,7 +1,7 @@
 #pragma once
 #include "sicasm.h"
 
-class cFile
+class DLLEXPORT cFile
 {
     HANDLE hFile;
     HANDLE hMapping;

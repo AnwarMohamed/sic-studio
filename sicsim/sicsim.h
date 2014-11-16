@@ -19,41 +19,21 @@
 */
 
 #pragma once
-#include "sicasm.h"
-#include "cSourceFile.h"
+#include <string>
+#include <string>
+#include <vector>
 
 using namespace std;
 
-class DLLEXPORT cListFile : public cSourceFile {
-public:
-    cListFile(char* filename);
-    ~cListFile();
+#ifdef _WIN32
+#pragma warning (disable : 4251)
+#include <Windows.h>
+#endif
 
-    virtual void print_listfile();
-
-private:
-    bool parse_siccode_lines();
-    
-
-    bool _end_set;
-    bool _start_set;
-    int _current_address;
-
-    bool is_numeric(string& str);
-    bool is_hex_number(string& str);
-    bool is_word_str(string& str);
-    bool is_alpha(string& str);
-    
-    void construct_symbol_table();
-    bool parse_instructions();
-
-protected:
-    int _start_address;
-    map<string, int> _symbols_table;
-
-    int str_to_int(char* str);
-    int hex_to_int(char* hex);
-
-    string merge_operands(vector<string> &operands);
-};
-
+#ifndef DLLEXPORT
+#ifdef _WIN32
+#define DLLEXPORT __declspec(dllexport) 
+#else
+#define DLLEXPORT
+#endif
+#endif

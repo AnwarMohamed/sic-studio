@@ -1,0 +1,38 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio 2013
+VisualStudioVersion = 12.0.21005.1
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sicasm", "sicasm\sicasm.vcxproj", "{58030DE2-E3C4-4B83-835F-AAF6E2EE9320}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sicsim", "sicsim\sicsim.vcxproj", "{97DF093A-C909-49F6-A6FA-B157FE461954}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sictest", "sictest\sictest.vcxproj", "{2E8142DF-59EB-4473-9210-ABA6D341FBDA}"
+	ProjectSection(ProjectDependencies) = postProject
+		{97DF093A-C909-49F6-A6FA-B157FE461954} = {97DF093A-C909-49F6-A6FA-B157FE461954}
+		{58030DE2-E3C4-4B83-835F-AAF6E2EE9320} = {58030DE2-E3C4-4B83-835F-AAF6E2EE9320}
+	EndProjectSection
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{58030DE2-E3C4-4B83-835F-AAF6E2EE9320}.Debug|Win32.ActiveCfg = Debug|Win32
+		{58030DE2-E3C4-4B83-835F-AAF6E2EE9320}.Debug|Win32.Build.0 = Debug|Win32
+		{58030DE2-E3C4-4B83-835F-AAF6E2EE9320}.Release|Win32.ActiveCfg = Release|Win32
+		{58030DE2-E3C4-4B83-835F-AAF6E2EE9320}.Release|Win32.Build.0 = Release|Win32
+		{97DF093A-C909-49F6-A6FA-B157FE461954}.Debug|Win32.ActiveCfg = Debug|Win32
+		{97DF093A-C909-49F6-A6FA-B157FE461954}.Debug|Win32.Build.0 = Debug|Win32
+		{97DF093A-C909-49F6-A6FA-B157FE461954}.Release|Win32.ActiveCfg = Release|Win32
+		{97DF093A-C909-49F6-A6FA-B157FE461954}.Release|Win32.Build.0 = Release|Win32
+		{2E8142DF-59EB-4473-9210-ABA6D341FBDA}.Debug|Win32.ActiveCfg = Debug|Win32
+		{2E8142DF-59EB-4473-9210-ABA6D341FBDA}.Debug|Win32.Build.0 = Debug|Win32
+		{2E8142DF-59EB-4473-9210-ABA6D341FBDA}.Release|Win32.ActiveCfg = Release|Win32
+		{2E8142DF-59EB-4473-9210-ABA6D341FBDA}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

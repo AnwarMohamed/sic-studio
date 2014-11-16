@@ -3,12 +3,18 @@
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
-    ui(new Ui::MainWindow)
-{
+    ui(new Ui::MainWindow) {
     ui->setupUi(this);
+
+    resizeEvent(NULL);
 }
 
-MainWindow::~MainWindow()
-{
+void MainWindow::resizeEvent(QResizeEvent*) {
+    ui->asmFrame->resize(geometry().width() - 1,
+                geometry().height() - ui->mainToolBar->geometry().height() - 42);
+}
+
+MainWindow::~MainWindow() {
     delete ui;
 }
+

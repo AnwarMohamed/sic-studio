@@ -29,7 +29,7 @@
 
 using namespace std;
 
-class cSourceFile: public cFile {
+class DLLEXPORT cSourceFile : public cFile {
 public:
     cSourceFile(char* filename);
     ~cSourceFile();
