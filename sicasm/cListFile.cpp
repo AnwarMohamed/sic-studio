@@ -144,12 +144,7 @@ bool cListFile::parse_instructions() {
                     _current_address += (siccode_line->operands.size()-3);
                 }
                 else if (siccode_line->operands.size() == 1 &&
-                    siccode_line->operands[0].size() >= 5 &&
-                    siccode_line->operands[0].size() % 2 == 1 &&
-                    siccode_line->operands[0][0] == 'X' &&
-                    siccode_line->operands[0][1] == '\'' &&
-                    siccode_line->operands[0][
-                        siccode_line->operands[0].size() - 1] == '\'') {
+                    is_hex_byte(siccode_line->operands[0])) {
                     _current_address += (siccode_line->operands[0].size()-3)/2;
                 }
                 else {
@@ -266,8 +261,17 @@ bool cListFile::parse_instructions() {
 
                                     if (_symbols_table.count(
                                         siccode_line->operands[0].substr(
-                                        1, siccode_line->operands[0].size()-1))
-                                        != 1) {
+                                        1, 
+                                        siccode_line->operands[0].size() - 1))
+                                        == 1) {
+                                    }
+                                    else if (is_hex_word(
+                                        siccode_line->operands[0].substr(
+                                        1, 
+                                        siccode_line->operands[0].size())
+                                        )) {
+                                    }
+                                    else {
                                         siccode_line->errors.push_back(
                                             ERROR_UNDEFINED_SYM);
                                     }
@@ -303,10 +307,22 @@ bool cListFile::parse_instructions() {
                                 siccode_line->operands[0])) {
 
                             }
-                            else if (siccode_line->operands[0][0] == '#' &&
-                                is_word_str(siccode_line->operands[0].substr(
-                                1, siccode_line->operands[0].size() - 1))) {
+                            else if (siccode_line->operands[0][0] == '#') {
+                                if (is_word_str(
+                                    siccode_line->operands[0].substr(
+                                    1, siccode_line->operands[0].size()-1))) {
+                                }
+                                else if (is_hex_word(
+                                    siccode_line->operands[0].substr(
+                                    1,
+                                    siccode_line->operands[0].size())
+                                    )) {
 
+                                }
+                                else {
+                                    siccode_line->errors.push_back(
+                                        ERROR_UNDEFINED_SYM);
+                                }
                             }
                             else if (siccode_line->operands[0][0] == '@') {
 
@@ -418,6 +434,32 @@ bool cListFile::starts_with(const string& original, const string& checkable) {
     }
 
     return true;
+}
+
+bool cListFile::is_hex_word(string& str) {
+    return is_hex_byte(str) && ((str.size()-3)/2 <= 3);
+}
+
+bool cListFile::is_hex_byte(string& str) {
+    if (str.size() >= 5 && str.size() % 2 == 1 &&
+        str[0] == 'X' && str[1] == '\'' &&
+        str[str.size() - 1] == '\'') {
+
+        for (int i = 2; i < (int)str.size() - 1; ++i) {
+            if ((str[i] >= 'A' && str[i] <= 'F') ||
+                (str[i] >= 'a' && str[i] <= 'f') ||
+                (str[i] >= '0' && str[i] <= '9')) {
+
+            }
+            else {
+                return false;
+            }
+        }
+        return true;
+    }
+    else {
+        return false;
+    }
 }
 
 string cListFile::suggest_operation(string operation) {

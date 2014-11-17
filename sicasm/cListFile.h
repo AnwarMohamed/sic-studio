@@ -43,12 +43,14 @@ private:
     bool is_hex_number(string& str);
     bool is_word_str(string& str);
     bool is_alpha(string& str);
+    bool is_hex_byte(string& str);
+    bool is_hex_word(string& str);
     
     void construct_symbol_table();
     bool parse_instructions();
     string suggest_operation(string operation);
 
-    //void suggest_operation();
+    
 
 protected:
     int _start_address;
