@@ -131,16 +131,16 @@ static unsigned char opcodes_format[59][4] = {
     { 0x04, 1, 0, 3},
     { 0xD0, 1, 0, 3},
     { 0x20, 1, 0, 3},
-    { 0x60, 1, 0, 2},
-    { 0x98, 2, 1, 1},
-    { 0xC8, 0, 0, 3},
+    { 0x60, 1, 0, 3},
+    { 0x98, 2, 1, 2},
+    { 0xC8, 0, 0, 1},
     { 0x44, 1, 0, 3},
-    { 0xD8, 1, 0, 2},
-    { 0xAC, 2, 1, 3},
-    { 0x4C, 0, 0, 2},
+    { 0xD8, 1, 0, 3},
+    { 0xAC, 2, 1, 2},
+    { 0x4C, 0, 0, 3},
     { 0xA4, 2, 1, 2},
-    { 0xA8, 2, 1, 1},
-    { 0xF0, 0, 0, 3},
+    { 0xA8, 2, 1, 2},
+    { 0xF0, 0, 0, 1},
     { 0xEC, 1, 0, 3},
     { 0x0C, 1, 0, 3},
     { 0x78, 1, 0, 3},
@@ -175,6 +175,7 @@ struct SICCodeLine {
     int address;
     string label;
     string mnemonic;
+    string mnemonic_t;
     SICOpCode* opcode_ref;
     vector<string> operands;
     string comment;
@@ -186,4 +187,6 @@ struct SICCodeLine {
 
     bool is_indirect;
     bool is_immediate;
+
+    bool is_variable;
 };

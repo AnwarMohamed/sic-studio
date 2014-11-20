@@ -29,12 +29,10 @@ public:
     cListFile(char* filename);
     ~cListFile();
 
-    virtual void print_listfile();
-
+    virtual void print_listfile(FILE* file=0);
 private:
     bool parse_siccode_lines();
     
-
     bool _end_set;
     bool _start_set;
     int _current_address;
@@ -49,18 +47,17 @@ private:
     void construct_symbol_table();
     bool parse_instructions();
     string suggest_operation(string operation);
-
-    
-
 protected:
     int _start_address;
+    int _end_address;
+    string _program_name;
+
     map<string, int> _symbols_table;
 
     int str_to_int(char* str);
     int hex_to_int(char* hex);
 
     string merge_operands(vector<string> &operands);
-
     bool starts_with(const string& haystack, const string& needle);
 };
 

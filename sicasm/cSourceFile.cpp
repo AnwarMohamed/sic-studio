@@ -23,6 +23,12 @@
 
 #define zero(o, s) memset(o, 0, s);
 
+#define MAX_LABEL   8
+#define MAX_OPERAND 8
+
+#define ERROR_MAX_LABEL      "too long label"
+#define ERROR_MAX_OPERAND    "too long operand"
+
 cSourceFile::cSourceFile(char* filename): cFile(filename) {
 	is_ready = true;
 
@@ -264,6 +270,20 @@ void cSourceFile::split_strings(SICCodeLine* line, string &str, bool skip) {
         else {
             line->operands.push_back(operands);
         }
+    }
+
+    if (line->label.size() > MAX_LABEL) {
+        line->errors.push_back(ERROR_MAX_LABEL);
+    }
+    
+    int operands_size = 0;
+    for (int i = 0; i < line->operands.size(); ++i) {
+        if (i) operands_size++;
+        operands_size += line->operands[i].size();
+    }
+
+    if (operands_size > MAX_OPERAND) {
+        //line->errors.push_back(ERROR_MAX_OPERAND);
     }
 }
 

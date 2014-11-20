@@ -26,13 +26,21 @@ public:
     cObjectFile(char* filename);
     ~cObjectFile();
 
-    void print_listfile();
-    void print_objectfile();
+    void print_listfile(FILE* file=0);
+    void print_objectfile(FILE* file=0);
     void generate_objectfile();
 
 private:
     void generate_object_code();
     void append_object_code(vector<char> &object_code, int x);
     void append_object_code(vector<char> &object_code, short x);
+    void append_object_code(vector<char> &object_code, string &bytes);
+
+    char encode_register(string &reg);
+    short next_address(short i);
+    string int_to_hex_string(int i);
+    string char_to_hex_string(char i);
+
+    string _object_code;
 };
 
