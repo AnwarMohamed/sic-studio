@@ -1,0 +1,51 @@
+SIC/XE Assembler
+By Anwar Mohamed ~ 2491
+anwarelmakrahy@gmail.com
+
+0000        BOOT     START   0                  BOOTSTRAP LOADER FOR SIC
+            .
+            . THIS BOOTSTRAP READS CODE FROM DEVICE F1 AND ENTERS IT INTO
+            . MEMORY STARTING AT ADDRESS 80 (HEX). AFTER ALL OF THE CODE
+            . HAS BEEN ENTERED INTO MEMORY, THE BOOTSTRAP EXECUTES A
+            . JUMP TO ADDRESS 80 TO BEGIN EXECUTION OF THE PROGRAM.
+            .
+            . REGISTER X = NEXT ADDRESS TO BE LOADED
+            .
+0000 03004B          LDA     ZERO               CLEAR REGISTER A TO ZERO
+0003 070048          LDX     HEX80              INITIALIZE REGISTER X TO HEX 80
+0006 4B001E LOOP     JSUB    GETC               READ HEX DIGIT
+0009 230054          MUL     K16                SHIFT DIGIT VALUE LEFT 4 BITS
+000C 0F0058          STA     TEMP               SAVE SHIFTED DIGIT VALUE
+000F 4B001E          JSUB    GETC               GET NEXT HEX DIGIT
+0012 1B0058          ADD     TEMP               COMBINE DIGITS TO FORM ONE BYTE
+0015 578000          STCH    0,X                STORE AT ADDRESS IN REGISTER X
+0018 2F004B          TIX     ZERO               ADD 1 TO ADDRESS BEING LOADED
+001B 3F0006          J       LOOP               LOOP UNTIL END OF INPUT
+            .
+            . SUBROUTINE TO READ ONE CHARACTER AND CONVERT IT
+            . FROM ASCII CODE TO HEX DIGIT VALUE. THE CONVERTED HEX DIGIT
+            . VALUE IS RETURNED IN REGISTER A. WHEN AN END-OF-FILE IS READ,
+            . CONTROL IS TRANSFERRED TO THE STARTING ADDRESS (HEX 80).
+            .
+001E E30057 GETC     TD      INPUT              TEST INPUT DEVICE
+0021 33001E          JEQ     GETC               LOOP UNTIL READY
+0024 DB0057          RD      INPUT              READ CHARACTER
+0027 2B0042          COMP    HEX04              IF CHARACTER IS HEX 04 (EOF),
+002A 330080          JEQ     80                 JUMP TO START OF PROGRAM
+002D 2B0045          COMP    HEX30              COMPARE TO HEX 30 (CHAR '0')
+0030 3B001E          JLT     GETC               SKIP CHARACTERS LESS THAN '0'
+0033 1F0045          SUB     HEX30              SUBTRACT HEX 30 FROM ASCII CODE
+0036 2B0051          COMP    K10                IF RESULT < 10, CONVERSION IS
+0039 3B003F          JLT     RETURN             COMPLETE. OTHERWISE, SUBTRACT
+003C 1F004E          SUB     K7                 7 MORE (FOR 'A' THROUGH 'F')
+003F 4F0000 RETURN   RSUB                       RETURN TO CALLER
+0042 000004 HEX04    BYTE    X'000004'          
+0045 000030 HEX30    BYTE    X'000030'          
+0048 000080 HEX80    BYTE    X'000080'          
+004B 000000 ZERO     WORD    0                  
+004E 000007 K7       WORD    7                  
+0051 00000A K10      WORD    10                 
+0054 000010 K16      WORD    16                 
+0057 F1     INPUT    BYTE    X'F1'              
+0058        TEMP     RESW    1                  
+005B                 END     BOOT               

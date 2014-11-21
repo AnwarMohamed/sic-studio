@@ -277,7 +277,7 @@ void cSourceFile::split_strings(SICCodeLine* line, string &str, bool skip) {
     }
     
     int operands_size = 0;
-    for (int i = 0; i < line->operands.size(); ++i) {
+    for (int i = 0; i < (int)line->operands.size(); ++i) {
         if (i) operands_size++;
         operands_size += line->operands[i].size();
     }

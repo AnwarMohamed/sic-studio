@@ -13,6 +13,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sictest", "sictest\sictest.
 		{58030DE2-E3C4-4B83-835F-AAF6E2EE9320} = {58030DE2-E3C4-4B83-835F-AAF6E2EE9320}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sicxesim", "sicxesim\sicxesim.vcxproj", "{725E25F4-CF2C-4DF2-A516-E16B26D6E48D}"
+	ProjectSection(ProjectDependencies) = postProject
+		{58030DE2-E3C4-4B83-835F-AAF6E2EE9320} = {58030DE2-E3C4-4B83-835F-AAF6E2EE9320}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -31,6 +36,10 @@ Global
 		{2E8142DF-59EB-4473-9210-ABA6D341FBDA}.Debug|Win32.Build.0 = Debug|Win32
 		{2E8142DF-59EB-4473-9210-ABA6D341FBDA}.Release|Win32.ActiveCfg = Release|Win32
 		{2E8142DF-59EB-4473-9210-ABA6D341FBDA}.Release|Win32.Build.0 = Release|Win32
+		{725E25F4-CF2C-4DF2-A516-E16B26D6E48D}.Debug|Win32.ActiveCfg = Debug|Win32
+		{725E25F4-CF2C-4DF2-A516-E16B26D6E48D}.Debug|Win32.Build.0 = Debug|Win32
+		{725E25F4-CF2C-4DF2-A516-E16B26D6E48D}.Release|Win32.ActiveCfg = Release|Win32
+		{725E25F4-CF2C-4DF2-A516-E16B26D6E48D}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
