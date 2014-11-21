@@ -1,8 +1,34 @@
 #include "../sicasm/sicasm.h"
 #include "../sicasm/cObjectFile.h"
 
+#pragma comment(lib,"winmm.lib")
+#pragma comment(lib,"kernel32.lib")
+
+void sendCommand(char *s) {
+	int i = mciSendString(s, NULL, 0, 0);
+	if (i) {
+		fprintf(stderr, "Error %d when sending %s\n", i, s);
+	}
+}
+
 int main(int argc, char* argv[])
 {
+
+	char shortBuffer[MAX_PATH];
+	char cmdBuff[MAX_PATH + 64];
+
+	GetShortPathName("mario.mp3", shortBuffer, sizeof(shortBuffer));
+	
+	if (!*shortBuffer) {
+		fprintf(stderr, "Cannot shorten filename \"%s\"\n", "mario.mp3");
+	}
+	else {
+		sendCommand("Close All");
+		sprintf_s(cmdBuff, "Open %s Type MPEGVideo Alias theMP3", shortBuffer);
+		sendCommand(cmdBuff);
+		sendCommand("Play theMP3");
+	}
+
 	printf(
 		"\n       ___                       ___           ___           ___     \n"
 		"      /  /\\        ___          /  /\\         /__/|         /  /\\    \n"
@@ -52,5 +78,7 @@ int main(int argc, char* argv[])
 	printf("\n[+] Exiting\n");
 
 	system("PAUSE");
+
+	sendCommand("Close All");
 	return 0;
 }
