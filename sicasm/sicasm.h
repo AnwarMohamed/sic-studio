@@ -187,6 +187,7 @@ struct SICCodeLine {
 
     bool is_indirect;
     bool is_immediate;
+    bool is_immediate_hex;
 
     bool is_variable;
 };

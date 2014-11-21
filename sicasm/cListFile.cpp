@@ -319,7 +319,7 @@ bool cListFile::parse_instructions() {
                         }
                         else if (is_hex_number(
                             siccode_line->operands[0])) {
-
+                            siccode_line->is_immediate_hex = true;
                         }
                         else if (siccode_line->operands[0][0] == '#') {
                             siccode_line->is_immediate = true;
@@ -537,7 +537,16 @@ bool cListFile::is_alpha(string& str) {
 }
 
 bool cListFile::is_hex_number(string& str) {
-    return str.size() ? hex_to_int((char*)str.c_str()) == -1 ? false : true : false;
+	for (int i = 0; i < (int)str.size(); ++i) {
+		if ((str[i] >= 'A' && str[i] <= 'F') ||
+			(str[i] >= 'a' && str[i] <= 'f') ||
+			(str[i] >= '0' && str[i] <= '9')) {
+		}
+		else {
+			return false;
+		}
+	}
+    return str.size() ? (hex_to_int((char*)str.c_str()) == -1 ? false : true) : false;
 }
 
 int cListFile::str_to_int(char* str) {

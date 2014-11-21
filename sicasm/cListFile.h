@@ -37,7 +37,7 @@ private:
     bool _start_set;
     int _current_address;
 
-    bool is_numeric(string& str);
+    
     bool is_hex_number(string& str);
     bool is_word_str(string& str);
     bool is_alpha(string& str);
@@ -56,6 +56,7 @@ protected:
 
     int str_to_int(char* str);
     int hex_to_int(char* hex);
+	bool is_numeric(string& str);
 
     string merge_operands(vector<string> &operands);
     bool starts_with(const string& haystack, const string& needle);

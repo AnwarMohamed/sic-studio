@@ -3,19 +3,19 @@
 
 INT main(INT argc, CHAR* argv[])
 {
-    //cObjectFile list("C:\\Users\\Anwar Mohamed\\Desktop\\SICXE Simulator\\systems\\Labs\\SICBOOT.ASM");
-    //cListFile list("C:\\Users\\Anwar Mohamed\\Desktop\\SICXE Simulator\\systems\\Labs\\SICLDR.ASM");
-    cObjectFile list("D:\\College\\systems\\labs\\quiz1.sicasm");
+    cObjectFile list("C:\\sicxe\\SICBOOT.ASM");
+    //cObjectFile list("C:\\sicxe\\SICLDR.ASM");
+    //cObjectFile list("D:\\College\\systems\\labs\\quiz1.sicasm");
 
     FILE* file;
     fopen_s(&file, "LISTFILE", "w");
     list.print_listfile(file);
-    //list.print_listfile();
+    list.print_listfile();
     fclose(file);
 
-    fopen_s(&file, "OBJFILE", "w");
+	fopen_s(&file, "OBJFILE", "w");
     list.print_objectfile(file);
-    list.print_objectfile();
+    //list.print_objectfile();
     fclose(file);
 
     system("PAUSE");
