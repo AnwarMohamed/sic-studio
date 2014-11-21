@@ -164,79 +164,100 @@ void cObjectFile::generate_object_code() {
 					}
 					break;
 				case 3:
-					if (!siccode_line->is_xe4) {
-						if (siccode_line->is_immediate) {
+					if (siccode_line->is_immediate) {
+						if (siccode_line->is_xe4) {
+							append_object_code(siccode_line->object_code,
+								(int)(str_to_int((char*)
+								siccode_line->operands[0].substr(1,
+								siccode_line->operands[0].size()).c_str())));
+							siccode_line->object_code[1] |= 0x01;
+						}
+						else {
 							append_object_code(siccode_line->object_code,
 								(short)(str_to_int((char*)
 								siccode_line->operands[0].substr(1,
 								siccode_line->operands[0].size()).c_str())));
-							siccode_line->object_code[0] |= 0x01;
 						}
-						else if (siccode_line->is_immediate_hex) {
-							append_object_code(siccode_line->object_code,
-								int_to_hex_string(
-								hex_to_int(
-								(char*)siccode_line->operands[0].c_str()))
-								.substr(2, 8));
-							siccode_line->object_code[0] |= 0x03;
+						siccode_line->object_code[0] |= 0x01;
+					}
+					else if (siccode_line->is_immediate_hex) {
+						append_object_code(siccode_line->object_code,
+							int_to_hex_string(
+							hex_to_int(
+							(char*)siccode_line->operands[0].c_str()))
+							.substr(2, 8));
+						siccode_line->object_code[0] |= 0x03;
+					}
+					else {
+						int address = 0;
+						if (siccode_line->is_indirect) {
+							siccode_line->object_code[0] &= 0xfe;
+							siccode_line->object_code[0] |= 0x02;
+
+							if (is_numeric(
+								siccode_line->operands[0].substr(
+								1, siccode_line->operands[0].size()))) {
+								address = hex_to_int(
+									(char*)siccode_line->operands[0].c_str());
+							}
+							else {
+								address = _siccode_lines[_symbols_table[
+									siccode_line->operands[0].substr(1,
+										siccode_line->operands[0].size())]
+								]->address;
+							}
 						}
 						else {
-							int address = 0;
-							if (siccode_line->is_indirect) {
-								siccode_line->object_code[0] &= 0xfe;
-								siccode_line->object_code[0] |= 0x02;
+							siccode_line->object_code[0] |= 0x03;
 
-								if (is_numeric(
-									siccode_line->operands[0].substr(
-									1, siccode_line->operands[0].size()))) {
-									address = hex_to_int(
-										(char*)siccode_line->operands[0].c_str());
-								}
-								else {
-									address = _siccode_lines[_symbols_table[
-										siccode_line->operands[0].substr(1, 
-											siccode_line->operands[0].size())]
-									]->address;
-								}
+							if (is_numeric(siccode_line->operands[0])) {
+								address = hex_to_int(
+									(char*)siccode_line->operands[0].c_str());
 							}
 							else {
-								siccode_line->object_code[0] |= 0x03;
-
-								if (is_numeric(siccode_line->operands[0])) {
-									address = hex_to_int(
-										(char*)siccode_line->operands[0].c_str());
-								}
-								else {
-									address = _siccode_lines[_symbols_table[
-										siccode_line->operands[0]]
-									]->address;
-								}
+								address = _siccode_lines[_symbols_table[
+									siccode_line->operands[0]]
+								]->address;
 							}
+						}
 
-							if (address > 0x0fff) {
-								address -= next_address(i);
-								address &= 0x00000fff;
+						if (address > 0x0fff) {
+							address -= next_address(i);
+							address &= 0x00000fff;
+
+							if (siccode_line->is_xe4) {
 								append_object_code(
-									siccode_line->object_code, (short)address);							
-								siccode_line->object_code[1] |= 0x20;
+									siccode_line->object_code, (int)address);
+								siccode_line->object_code[1] |= 0x01;
 							}
 							else {
-								address &= 0x00000fff;
+								append_object_code(
+									siccode_line->object_code, (short)address);
+							}
+							siccode_line->object_code[1] |= 0x20;
+						}
+						else {
+							address &= 0x00000fff;
+
+							if (siccode_line->is_xe4) {
+								append_object_code(
+									siccode_line->object_code, (int)address);
+								siccode_line->object_code[1] |= 0x01;
+							}
+							else {
 								append_object_code(
 									siccode_line->object_code, (short)address);
 							}
 						}
 					}
-					else {
-						/* Handling Format 4 */
-					}
+
 					break;
 				}
 
 				if (siccode_line->is_indexed) {
 					siccode_line->object_code[1] |= 0x80;
 				}
-				
+
 				break;
 			case 2: {
 						string loperand = siccode_line->operands[0];
