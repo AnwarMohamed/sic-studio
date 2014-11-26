@@ -46,7 +46,8 @@ private:
     
     void construct_symbol_table();
     bool parse_instructions();
-    string suggest_operation(string operation);
+    string suggest_operation(string operation);	
+
 protected:
     int _start_address;
     int _end_address;
@@ -57,6 +58,8 @@ protected:
     int str_to_int(char* str);
     int hex_to_int(char* hex);
 	bool is_numeric(string& str);
+
+	char encode_register(string &reg);
 
     string merge_operands(vector<string> &operands);
     bool starts_with(const string& haystack, const string& needle);

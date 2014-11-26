@@ -3,9 +3,9 @@
 
 INT main(INT argc, CHAR* argv[])
 {
-    cObjectFile list("C:\\sicxe\\SICBOOT.ASM");
+    //cObjectFile list("C:\\sicxe\\SICBOOT.ASM");
     //cObjectFile list("C:\\sicxe\\SICLDR.ASM");
-    //cObjectFile list("D:\\College\\systems\\labs\\quiz1.sicasm");
+    cObjectFile list("D:\\College\\systems\\labs\\quiz1.sicasm");
 
     FILE* file;
     fopen_s(&file, "LISTFILE", "w");

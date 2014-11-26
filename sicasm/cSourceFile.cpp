@@ -82,7 +82,6 @@ void cSourceFile::parse_sourcefile() {
                 label_word = _sourcefile_line;
             }
 
-
             if (label_word[0] == '.') {
                 line->comment = _sourcefile_line;
                 line->is_comment = true;
@@ -98,6 +97,7 @@ void cSourceFile::parse_sourcefile() {
             }
             else if (_opcodes_table.count(label_word) == 1 ||
                 label_word == "END" || label_word == "START" ||
+				label_word == "BASE" || label_word == "NOBASE" ||
                 label_word == "RESW" || label_word == "RESB" ||
                 label_word == "BYTE" || label_word == "WORD") {
                 split_strings(line, _sourcefile_line, true);
@@ -122,6 +122,13 @@ void cSourceFile::split_strings(SICCodeLine* line, string &str, bool skip) {
     if (find_result != string::npos) {
         if (skip) {
             line->mnemonic = str.substr(last_result, find_result);
+			
+			if (line->mnemonic.size() &&
+				(line->mnemonic[0] == '+')) {
+				line->mnemonic_t = '+';
+				line->mnemonic = line->mnemonic.substr(
+					1, line->mnemonic.size());
+			}
         }
         else {
             line->label = str.substr(last_result, find_result);
@@ -135,16 +142,29 @@ void cSourceFile::split_strings(SICCodeLine* line, string &str, bool skip) {
                     _opcodes_table[line->mnemonic]->operands == 0) {
                     line->comment = 
                         str.substr(last_result, str.size() - last_result);
-                    return;
+					return;
                 }
                 else {
                     operands =
                         str.substr(last_result, find_result - last_result);
+
+					if (operands.size() &&
+						(operands[0] == '@' || operands[0] == '#')) {
+						line->operands_t = operands[0];
+						operands = operands.substr(1, operands.size());
+					}
                 }
             }
             else {
                 line->mnemonic =
                     str.substr(last_result, find_result - last_result);
+
+				if (line->mnemonic.size() &&
+					(line->mnemonic[0] == '+')) {
+					line->mnemonic_t = '+';
+					line->mnemonic = line->mnemonic.substr(
+						1, line->mnemonic.size());
+				}
             }
 
             last_result = find_result + 1;
@@ -165,6 +185,12 @@ void cSourceFile::split_strings(SICCodeLine* line, string &str, bool skip) {
                     else {
                         operands =
                             str.substr(last_result, find_result - last_result);
+
+						if (operands.size() &&
+							(operands[0] == '@' || operands[0] == '#')) {
+							line->operands_t = operands[0];
+							operands = operands.substr(1, operands.size());
+						}
                     }
 
                     last_result = find_result + 1;
@@ -187,6 +213,12 @@ void cSourceFile::split_strings(SICCodeLine* line, string &str, bool skip) {
                     else {
                         operands =
                             str.substr(last_result, str.size() - last_result);
+
+						if (operands.size() &&
+							(operands[0] == '@' || operands[0] == '#')) {
+							line->operands_t = operands[0];
+							operands = operands.substr(1, operands.size());
+						}
                     }
                 }
             }
@@ -202,17 +234,37 @@ void cSourceFile::split_strings(SICCodeLine* line, string &str, bool skip) {
                 else {
                     operands = 
                         str.substr(last_result, str.size() - last_result);
+
+					if (operands.size() &&
+						(operands[0] == '@' || operands[0] == '#')) {
+						line->operands_t = operands[0];
+						operands = operands.substr(1, operands.size());
+					}
                 }
             }
             else {
                 line->mnemonic = 
                     str.substr(last_result, str.size() - last_result);
+
+				if (line->mnemonic.size() &&
+					(line->mnemonic[0] == '+')) {
+					line->mnemonic_t = '+';
+					line->mnemonic = line->mnemonic.substr(
+						1, line->mnemonic.size());
+				}
             }
         }
     }
     else {
         if (skip) {
             line->mnemonic = str;
+
+			if (line->mnemonic.size() &&
+				(line->mnemonic[0] == '+')) {
+				line->mnemonic_t = '+';
+				line->mnemonic = line->mnemonic.substr(
+					1, line->mnemonic.size());
+			}
         }
         else {
             line->label = str;

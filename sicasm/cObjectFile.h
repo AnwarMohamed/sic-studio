@@ -36,11 +36,12 @@ private:
     void append_object_code(vector<char> &object_code, short x);
     void append_object_code(vector<char> &object_code, string &bytes);
 
-    char encode_register(string &reg);
     short next_address(short i);
     string int_to_hex_string(int i);
     string char_to_hex_string(char i);
 
     string _object_code;
+
+	int _base_address;
 };
 

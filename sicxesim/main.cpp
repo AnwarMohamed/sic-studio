@@ -4,7 +4,7 @@
 #pragma comment(lib,"winmm.lib")
 #pragma comment(lib,"kernel32.lib")
 
-void sendCommand(char *s) {
+void send_command(char *s) {
 	int i = mciSendString(s, NULL, 0, 0);
 	if (i) {
 		fprintf(stderr, "Error %d when sending %s\n", i, s);
@@ -23,10 +23,10 @@ int main(int argc, char* argv[])
 		fprintf(stderr, "Cannot shorten filename \"%s\"\n", "mario.mp3");
 	}
 	else {
-		sendCommand("Close All");
-		sprintf_s(cmdBuff, "Open %s Type MPEGVideo Alias theMP3", shortBuffer);
-		sendCommand(cmdBuff);
-		sendCommand("Play theMP3");
+		send_command("Close All");
+		sprintf_s(cmdBuff, "Open %s Type MPEGVideo Alias sicMP3", shortBuffer);
+		send_command(cmdBuff);
+		send_command("Play sicMP3");
 	}
 
 	printf(
@@ -75,10 +75,9 @@ int main(int argc, char* argv[])
 		printf("[x] Check if the specified file exists\n");
 	}
 
-	printf("\n[+] Exiting\n");
-
+	printf("\n");
 	system("PAUSE");
-
-	sendCommand("Close All");
+	printf("\n[+] Exiting\n");
+	send_command("Close All");
 	return 0;
 }

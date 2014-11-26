@@ -98,7 +98,7 @@ void cObjectFile::generate_objectfile() {
 
 void cObjectFile::generate_object_code() {
 	SICCodeLine* siccode_line;
-	bool base_relative = false;
+	_base_address = -1;
 	is_ready = true;
 
 	for (int i = 0; i < (int)_siccode_lines.size(); ++i) {
@@ -140,20 +140,29 @@ void cObjectFile::generate_object_code() {
 			continue;
 		}
 
+		else if (siccode_line->mnemonic == "BASE") {
+			_base_address = siccode_line->address;
+		}
+
+		else if (siccode_line->mnemonic == "NOBASE") {
+			_base_address = -1;
+		}
+
 		else {
 			siccode_line->object_code.push_back(
 				siccode_line->opcode_ref->opcode);
 
 			switch (siccode_line->opcode_ref->operands) {
 			case 0:
-				append_object_code(siccode_line->object_code, (short)0);
-				siccode_line->object_code[0] |= 0x03;
 				break;
 			case 1:
-
 				switch (siccode_line->opcode_ref->format) {
 				case 2:
-					/* Must handle register_based */
+					if (encode_register(siccode_line->operands[0]) != -1) {
+						siccode_line->object_code.push_back(
+							encode_register(siccode_line->operands[0]) << 4);
+					}
+
 					siccode_line->object_code.push_back(
 						(char)(_siccode_lines[_symbols_table[
 							siccode_line->operands[0]]
@@ -259,41 +268,22 @@ void cObjectFile::generate_object_code() {
 				}
 
 				break;
-			case 2: {
-						string loperand = siccode_line->operands[0];
-						string roperand = siccode_line->operands[1];
+			case 2:
+				siccode_line->object_code.push_back(
+					encode_register(siccode_line->operands[0]) << 4);
 
-						if (siccode_line->opcode_ref->register_based) {
-
-						}
-						else {
-
-						}
-			}
+				if ((siccode_line->mnemonic == "SHIFTL" ||
+					siccode_line->mnemonic == "SHIFTR")) {
+					siccode_line->object_code[1] |= ((char)str_to_int(
+						(char*)siccode_line->operands[1].c_str()) & 0x0f);
+				}
+				else {
+					siccode_line->object_code[1] |= 
+						(encode_register(siccode_line->operands[1]) & 0x0f);
+				}
 				break;
 			}
 		}
-	}
-}
-
-char cObjectFile::encode_register(string &reg) {
-	switch (reg[0]) {
-	case 'A':
-		return 0;
-	case 'X':
-		return 1;
-	case 'L':
-		return 2;
-	case 'B':
-		return 3;
-	case 'S':
-		return 4;
-	case 'T':
-		return 5;
-	case 'F':
-		return 6;
-	default:
-		return -1;
 	}
 }
 
@@ -332,8 +322,8 @@ void cObjectFile::print_listfile(FILE* file) {
 
 			fprintf(file ? file : stdout, " %-8s %-7s %-18s %s\n",
 				siccode_line->label.c_str(),
-				siccode_line->mnemonic.c_str(),
-				merge_operands(siccode_line->operands).c_str(),
+				(siccode_line->mnemonic_t + siccode_line->mnemonic).c_str(),
+				(siccode_line->operands_t + merge_operands(siccode_line->operands)).c_str(),
 				siccode_line->comment.c_str());
 
 			for (int j = 3; j < (int)siccode_line->object_code.size(); ++j) {
