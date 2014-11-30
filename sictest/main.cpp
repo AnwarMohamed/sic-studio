@@ -1,5 +1,5 @@
-#include "../sicasm/sicasm.h"
-#include "../sicasm/cObjectFile.h"
+#include "../libsicasm/sicasm.h"
+#include "../libsicasm/cObjectFile.h"
 
 INT main(INT argc, CHAR* argv[])
 {

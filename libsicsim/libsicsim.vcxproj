@@ -14,6 +14,7 @@
     <ProjectGuid>{97DF093A-C909-49F6-A6FA-B157FE461954}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>sicsim</RootNamespace>
+    <ProjectName>libsicsim</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -41,9 +42,11 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
+    <TargetName>sicsim</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <LinkIncremental>false</LinkIncremental>
+    <TargetName>sicsim</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -78,7 +81,13 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="cRegisters.h" />
+    <ClInclude Include="cSimulator.h" />
     <ClInclude Include="sicsim.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="cRegisters.cpp" />
+    <ClCompile Include="cSimulator.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

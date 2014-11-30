@@ -1,5 +1,5 @@
-#include "../sicasm/sicasm.h"
-#include "../sicasm/cObjectFile.h"
+#include "../libsicasm/sicasm.h"
+#include "../libsicasm/cObjectFile.h"
 
 #pragma comment(lib,"winmm.lib")
 #pragma comment(lib,"kernel32.lib")
