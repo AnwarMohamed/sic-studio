@@ -154,6 +154,20 @@ void cObjectFile::generate_object_code() {
 
 			switch (siccode_line->opcode_ref->operands) {
 			case 0:
+				switch (siccode_line->opcode_ref->format) {
+				case 2:
+					append_object_code(siccode_line->object_code, (char)0);
+					break;
+				case 3:
+					if (siccode_line->is_xe4) {
+						append_object_code(siccode_line->object_code, (int)0);
+					}
+					else {
+						append_object_code(siccode_line->object_code, (short)0);
+					}
+					siccode_line->object_code[0] |= 0x03;
+					break;
+				}
 				break;
 			case 1:
 				switch (siccode_line->opcode_ref->format) {
