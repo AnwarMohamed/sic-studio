@@ -76,7 +76,7 @@ int main(int argc, char* argv[])
 	}
 
 	printf("\n");
-	system("PAUSE");
+	//system("PAUSE");
 	printf("\n[+] Exiting\n");
 	send_command("Close All");
 	return 0;

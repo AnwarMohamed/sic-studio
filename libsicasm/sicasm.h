@@ -163,6 +163,12 @@ static unsigned char opcodes_format[59][4] = {
     { 0xDC, 1, 0, 3},
 }; 
 
+struct SICLiteral {
+	char type;
+	vector<char> object_code;
+	int address;
+};
+
 struct SICOpCode {
     string mnemonic;
     char opcode;

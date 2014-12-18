@@ -11,3 +11,6 @@ sictest/LISTFILE
 sictest/OBJFILE
 sicxesim/OBJFILE
 sicxesim/LISTFILE
+*.mp3
+sicxeasm/OBJFILE
+sicxeasm/LISTFILE

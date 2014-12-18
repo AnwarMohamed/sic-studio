@@ -48,12 +48,21 @@ private:
     bool parse_instructions();
     string suggest_operation(string operation);	
 
+	void handle_start_directive(SICCodeLine* code);
+	void handle_word_directive(SICCodeLine* code);
+	void handle_byte_directive(SICCodeLine* code);
+	void handle_resb_directive(SICCodeLine* code);
+	void handle_resw_directive(SICCodeLine* code);
+	void handle_end_directive(SICCodeLine* code);
+	void suggest_end_operand(SICCodeLine* code);
+
 protected:
     int _start_address;
     int _end_address;
     string _program_name;
 
     map<string, int> _symbols_table;
+	map<string, SICLiteral*> _literals_table;
 
     int str_to_int(char* str);
     int hex_to_int(char* hex);
@@ -63,5 +72,7 @@ protected:
 
     string merge_operands(vector<string> &operands);
     bool starts_with(const string& haystack, const string& needle);
+
+	char is_byte_instruction(string& inst);
 };
 

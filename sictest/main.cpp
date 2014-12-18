@@ -18,6 +18,6 @@ INT main(INT argc, CHAR* argv[])
     //list.print_objectfile();
     fclose(file);
 
-    system("PAUSE");
+    //system("PAUSE");
     return 0;
 }

@@ -59,6 +59,7 @@ void cSourceFile::parse_sourcefile() {
     char *ptr = (char*)BaseAddress, *lptr = ptr;
     SICCodeLine* line;
 
+	/* PASS 1 */
     for (int i = 0; i < (int)FileLength-1;) {
         if ((ptr[i] == '\r' && ptr[i + 1] == '\n') || ptr[i] == '\n' ||
             i + 2 == FileLength) {
@@ -149,7 +150,7 @@ void cSourceFile::split_strings(SICCodeLine* line, string &str, bool skip) {
                         str.substr(last_result, find_result - last_result);
 
 					if (operands.size() &&
-						(operands[0] == '@' || operands[0] == '#')) {
+						(operands[0] == '@' || operands[0] == '#' || operands[0] == '=')) {
 						line->operands_t = operands[0];
 						operands = operands.substr(1, operands.size());
 					}
@@ -187,7 +188,7 @@ void cSourceFile::split_strings(SICCodeLine* line, string &str, bool skip) {
                             str.substr(last_result, find_result - last_result);
 
 						if (operands.size() &&
-							(operands[0] == '@' || operands[0] == '#')) {
+							(operands[0] == '@' || operands[0] == '#' || operands[0] == '=')) {
 							line->operands_t = operands[0];
 							operands = operands.substr(1, operands.size());
 						}
@@ -215,7 +216,7 @@ void cSourceFile::split_strings(SICCodeLine* line, string &str, bool skip) {
                             str.substr(last_result, str.size() - last_result);
 
 						if (operands.size() &&
-							(operands[0] == '@' || operands[0] == '#')) {
+							(operands[0] == '@' || operands[0] == '#' || operands[0] == '=')) {
 							line->operands_t = operands[0];
 							operands = operands.substr(1, operands.size());
 						}
@@ -236,7 +237,7 @@ void cSourceFile::split_strings(SICCodeLine* line, string &str, bool skip) {
                         str.substr(last_result, str.size() - last_result);
 
 					if (operands.size() &&
-						(operands[0] == '@' || operands[0] == '#')) {
+						(operands[0] == '@' || operands[0] == '#' || operands[0] == '=')) {
 						line->operands_t = operands[0];
 						operands = operands.substr(1, operands.size());
 					}
