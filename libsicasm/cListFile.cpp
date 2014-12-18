@@ -198,10 +198,159 @@ void cListFile::handle_end_directive(SICCodeLine* code) {
 	}
 }
 
-bool cListFile::parse_instructions() {
-	if (!_siccode_lines.size()) {
-		return false;
+void cListFile::handle_indexed_operand(SICCodeLine* code) {
+	code->is_indexed = true;
+
+	if (code->operands_t == "@") {
+		if (_symbols_table.count(code->operands[0]) == 1 &&
+			_siccode_lines[_symbols_table[code->operands[0]]]->is_variable) {
+			code->is_indirect = true;
+		}
+		else {
+			code->errors.push_back(ERROR_UNDEFINED_SYM);
+		}
 	}
+	else if (code->operands_t == "#") {
+		if (_symbols_table.count(code->operands[0]) == 1 &&
+			_siccode_lines[_symbols_table[code->operands[0]]]->is_variable) {
+			code->is_indirect = true;
+		}
+		else if (is_hex_word(code->operands[0])) {
+
+		}
+		else {
+			code->errors.push_back(ERROR_UNDEFINED_SYM);
+		}
+	}
+	else if (is_hex_number(code->operands[0])) {
+
+	}
+	else if (_symbols_table.count(code->operands[0]) != 1) {
+		code->errors.push_back(ERROR_UNDEFINED_SYM);
+	}
+}
+
+void cListFile::handle_literal(SICCodeLine* code) {
+	if (code->operands.size() == 1) {
+		switch (is_byte_instruction(code->operands[0])) {
+
+		case BYTE_INSTRUCTION_INVALID:
+			code->errors.push_back(ERROR_ILLEGAL_LITERAL);
+			break;
+		case BYTE_INSTRUCTION_HEX:
+			if (_literals_table.count(code->operands[0]) == 0 ||
+				_literals_table[code->operands[0]]->address != -1) {
+
+			}
+
+			_current_address += (code->operands[0].size() - 3) / 2;
+			break;
+		case BYTE_INSTRUCTION_CHAR:
+			_current_address += (code->operands.size() - 3);
+			break;
+		}
+	}
+}
+
+void cListFile::handle_opcodes_single_operand(SICCodeLine* code) {
+	if (code->operands.size()) {
+		if (code->operands.size() == 2) {
+			if (code->operands[1] == "X")
+				handle_indexed_operand(code);
+			else
+				code->errors.push_back(ERROR_ILLEGAL_OPERAND);
+		}
+		else if (code->operands.size() == 1) {
+			if (code->is_xe4) {
+				if (_symbols_table.count(code->operands[0]) != 1)
+					code->errors.push_back(ERROR_UNDEFINED_SYM);
+			}
+			else if (is_hex_number(code->operands[0]))
+				code->is_immediate_hex = true;
+
+			else if (code->operands_t == "#") {
+				code->is_immediate = true;
+
+				if (is_word_str(code->operands[0])) {
+				}
+				else if (is_hex_word(code->operands[0])) {
+				}
+				else
+					code->errors.push_back(ERROR_UNDEFINED_SYM);
+			}
+			else if (code->operands_t == "@") {
+				code->is_indirect = true;
+
+				if (_symbols_table.count(code->operands[0]) == 1 &&
+					_siccode_lines[
+						_symbols_table[code->operands[0]]]->is_variable) {
+				}
+				else
+					code->errors.push_back(ERROR_UNDEFINED_SYM);
+			}
+
+			/* Handling Literals */
+			else if (code->operands_t == "=")
+				handle_literal(code);
+
+			else if (_symbols_table.count(code->operands[0]) != 1)
+				code->errors.push_back(ERROR_UNDEFINED_SYM);
+		}
+		else
+			code->errors.push_back(ERROR_ILLEGAL_OPERAND);
+	}
+	else
+		code->errors.push_back(ERROR_MISSING_OPERAND);
+}
+
+void cListFile::handle_opcodes_dual_operands(SICCodeLine* code) {
+	if (code->operands.size() == 2) {
+		if ((code->mnemonic == "SHIFTL" || code->mnemonic == "SHIFTR") &&
+			encode_register(code->operands[0]) != -1 &&
+			str_to_int((char*)code->operands[1].c_str()) < 16) {
+
+		}
+		else if (encode_register(code->operands[0]) != -1 &&
+			encode_register(code->operands[1]) != -1) {
+
+		}
+		else
+			code->errors.push_back(ERROR_ILLEGAL_OPERAND);
+	}
+	else
+		code->errors.push_back(ERROR_ILLEGAL_OPERAND);
+}
+
+void cListFile::handle_opcodes(SICCodeLine* code) {
+
+	if (code->mnemonic_t == "+")
+		code->is_xe4 = true;
+
+	code->address = _current_address;
+	_current_address += 3;
+
+	if (code->is_xe4 && code->opcode_ref->format != 3)
+		code->errors.push_back(ERROR_ILLEGAL_OPCODE_V3);
+
+
+	switch (code->opcode_ref->operands) {
+	case 0:
+		if (code->operands.size())
+			code->errors.push_back(ERROR_ILLEGAL_OPERAND);
+
+		break;
+	case 1:
+		handle_opcodes_single_operand(code);
+		break;
+	case 2:
+		handle_opcodes_dual_operands(code);
+		break;
+	}
+}
+
+bool cListFile::parse_instructions() {
+	if (!_siccode_lines.size())
+		return false;
 
 	_start_address = _current_address = 0;
 
@@ -209,43 +358,35 @@ bool cListFile::parse_instructions() {
 	SICCodeLine* siccode_line;
 	bool warn_no_start = false;
 
-	/* PASS 2 */
 	for (int i = 0; i < (int)_siccode_lines.size(); ++i) {
 		siccode_line = _siccode_lines[i];
 
-		if (siccode_line->is_comment) {
+		if (siccode_line->is_comment)
 			continue;
-		}
 
 		/* Handling START Directive */
-		if (siccode_line->mnemonic == "START") {
+		if (siccode_line->mnemonic == "START")
 			handle_start_directive(siccode_line);
-		}
 
 		/* Handling WORD Directive */
-		else if (siccode_line->mnemonic == "WORD") {
+		else if (siccode_line->mnemonic == "WORD")
 			handle_word_directive(siccode_line);
-		}
 
 		/* Handling BYTE Directive */
-		else if (siccode_line->mnemonic == "BYTE") {
+		else if (siccode_line->mnemonic == "BYTE")
 			handle_byte_directive(siccode_line);
-		}
 
 		/* Handling RESW Directive */
-		else if (siccode_line->mnemonic == "RESW") {
+		else if (siccode_line->mnemonic == "RESW")
 			handle_resw_directive(siccode_line);
-		}
 
 		/* Handling RESB Directive */
-		else if (siccode_line->mnemonic == "RESB") {
+		else if (siccode_line->mnemonic == "RESB")
 			handle_resb_directive(siccode_line);
-		}
 
 		/* Handling END Directive */
-		else if (siccode_line->mnemonic == "END") {
+		else if (siccode_line->mnemonic == "END")
 			handle_end_directive(siccode_line);
-		}
 
 		/* Handling BASE, NOBASE Directives */
 		else if (siccode_line->mnemonic == "BASE" ||
@@ -260,249 +401,18 @@ bool cListFile::parse_instructions() {
 		/* Handling Opcodes */
 		else if ((opcode_table_it = _opcodes_table.find(
 			siccode_line->mnemonic)) != _opcodes_table.end()) {
-
-			if (siccode_line->mnemonic_t == "+") {
-				siccode_line->is_xe4 = true;
-			}
-
-			siccode_line->address = _current_address;
 			siccode_line->opcode_ref = opcode_table_it->second;
-			_current_address += 3;
-
-			if (siccode_line->is_xe4 &&
-				siccode_line->opcode_ref->format != 3) {
-				siccode_line->errors.push_back(ERROR_ILLEGAL_OPCODE_V3);
-			}
-
-			switch (opcode_table_it->second->operands)
-			{
-			case 0:
-				if (siccode_line->operands.size()) {
-					siccode_line->errors.push_back(
-						ERROR_ILLEGAL_OPERAND);
-				}
-				break;
-			case 1:
-				if (siccode_line->operands.size()) {
-					if (siccode_line->operands.size() == 2) {
-						if (siccode_line->operands[1] == "X") {
-							siccode_line->is_indexed = true;
-
-							if (siccode_line->operands_t == "@") {
-								if (_symbols_table.count(
-									siccode_line->operands[0]) == 1 &&
-									_siccode_lines[_symbols_table[
-										siccode_line->operands[0]]
-									]->is_variable) {
-									siccode_line->is_indirect = true;
-								}
-								else {
-									siccode_line->errors.push_back(
-										ERROR_UNDEFINED_SYM);
-								}
-							}
-							else if (siccode_line->operands_t == "#") {
-								if (_symbols_table.count(
-									siccode_line->operands[0]) == 1 &&
-									_siccode_lines[_symbols_table[
-										siccode_line->operands[0]]
-									]->is_variable) {
-									siccode_line->is_indirect = true;
-								}
-								else if (is_hex_word(
-									siccode_line->operands[0])) {
-								}
-								else {
-									siccode_line->errors.push_back(
-										ERROR_UNDEFINED_SYM);
-								}
-							}
-							else if (is_hex_number(
-								siccode_line->operands[0])) {
-
-							}
-							else {
-								if (_symbols_table.count(
-									siccode_line->operands[0]) != 1) {
-									siccode_line->errors.push_back(
-										ERROR_UNDEFINED_SYM);
-								}
-							}
-						}
-						else {
-							siccode_line->errors.push_back(
-								ERROR_ILLEGAL_OPERAND);
-						}
-					}
-					else if (siccode_line->operands.size() == 1) {
-						if (siccode_line->is_xe4) {
-							if (_symbols_table.count(
-								siccode_line->operands[0]) != 1) {
-								siccode_line->errors.push_back(
-									ERROR_UNDEFINED_SYM);
-							}
-						}
-						else if (is_hex_number(
-							siccode_line->operands[0])) {
-							siccode_line->is_immediate_hex = true;
-						}
-						else if (siccode_line->operands_t == "#") {
-							siccode_line->is_immediate = true;
-
-							if (is_word_str(
-								siccode_line->operands[0])) {
-							}
-							else if (is_hex_word(
-								siccode_line->operands[0])) {
-
-							}
-							else {
-								siccode_line->errors.push_back(
-									ERROR_UNDEFINED_SYM);
-							}
-						}
-						else if (siccode_line->operands_t == "@") {
-							siccode_line->is_indirect = true;
-
-							if (_symbols_table.count(
-								siccode_line->operands[0]) == 1 &&
-								_siccode_lines[_symbols_table[
-									siccode_line->operands[0]]
-								]->is_variable) {
-
-							}
-							else {
-								siccode_line->errors.push_back(
-									ERROR_UNDEFINED_SYM);
-							}
-						}
-
-						/* Handling Literals */
-						else if (siccode_line->operands_t == "=") {
-							if (siccode_line->operands.size() == 1) {
-								switch (is_byte_instruction(
-									siccode_line->operands[0])) {
-
-								case BYTE_INSTRUCTION_INVALID:
-									siccode_line->errors.push_back(
-										ERROR_ILLEGAL_LITERAL);
-									break;
-								case BYTE_INSTRUCTION_HEX:
-									if (_literals_table.count(
-										siccode_line->operands[0]) == 0 ||
-										_literals_table[
-											siccode_line->operands[0]
-										]->address != -1) {
-
-									}
-									_current_address +=
-										(siccode_line->operands[0].size() - 3) / 2;
-									break;
-								case BYTE_INSTRUCTION_CHAR:
-									_current_address +=
-										(siccode_line->operands.size() - 3);
-									break;
-								}
-							}
-						}
-
-						else {
-							if (_symbols_table.count(
-								siccode_line->operands[0]) != 1) {
-								siccode_line->errors.push_back(
-									ERROR_UNDEFINED_SYM);
-							}
-						}
-					}
-					else {
-						siccode_line->errors.push_back(
-							ERROR_ILLEGAL_OPERAND);
-					}
-				}
-				else {
-					siccode_line->errors.push_back(
-						ERROR_MISSING_OPERAND);
-				}
-				break;
-			case 2:
-				if (siccode_line->operands.size() == 2) {
-					if ((siccode_line->mnemonic == "SHIFTL" ||
-						siccode_line->mnemonic == "SHIFTR") &&
-						encode_register(siccode_line->operands[0]) != -1 &&
-						str_to_int(
-						(char*)siccode_line->operands[1].c_str()) < 16) {
-
-					}
-					else if (encode_register(siccode_line->operands[0]) != -1 &&
-						encode_register(siccode_line->operands[1]) != -1) {
-
-					}
-					else {
-						siccode_line->errors.push_back(
-							ERROR_ILLEGAL_OPERAND);
-					}
-				}
-				else {
-					siccode_line->errors.push_back(
-						ERROR_ILLEGAL_OPERAND);
-				}
-				break;
-			}
+			handle_opcodes(siccode_line);
 		}
 
 		/* Handling Unknown Opcodes */
-		else {
-			siccode_line->address = _current_address;
-			siccode_line->errors.push_back(ERROR_UNRECOG_OPCODE);
-
-			if (starts_with(siccode_line->mnemonic, "STAR") ||
-				starts_with(siccode_line->mnemonic, "TART") ||
-				starts_with(siccode_line->mnemonic, "STRT")) {
-				siccode_line->errors.push_back(suggest_operation("START"));
-			}
-			else if (siccode_line->mnemonic == "ND" ||
-				siccode_line->mnemonic == "EN") {
-				siccode_line->errors.push_back(suggest_operation("END"));
-			}
-			else if (starts_with(siccode_line->mnemonic, "RES") ||
-				starts_with(siccode_line->mnemonic, "RS") ||
-				starts_with(siccode_line->mnemonic, "ES") ||
-				starts_with(siccode_line->mnemonic, "RE")) {
-				siccode_line->errors.push_back(suggest_operation("RESW\' or \'RESB"));
-			}
-			else if (starts_with(siccode_line->mnemonic, "ORD") ||
-				starts_with(siccode_line->mnemonic, "WRD") ||
-				starts_with(siccode_line->mnemonic, "WOR")) {
-				siccode_line->errors.push_back(suggest_operation("WORD"));
-			}
-			else if (starts_with(siccode_line->mnemonic, "YTE") ||
-				starts_with(siccode_line->mnemonic, "BYT") ||
-				starts_with(siccode_line->mnemonic, "BTE")) {
-				siccode_line->errors.push_back(suggest_operation("BYTE"));
-			}
-			else if (starts_with(siccode_line->mnemonic, "YTE") ||
-				starts_with(siccode_line->mnemonic, "BYT") ||
-				starts_with(siccode_line->mnemonic, "BTE")) {
-				siccode_line->errors.push_back(suggest_operation("BYTE"));
-			}
-			else if (_start_set)    {
-				for (int j = 0; j < OPCODES_SIZE; ++j) {
-					if (starts_with(opcodes_mnemonic[j],
-						siccode_line->mnemonic) ||
-						starts_with(siccode_line->mnemonic,
-						opcodes_mnemonic[j])) {
-						siccode_line->errors.push_back(
-							suggest_operation(opcodes_mnemonic[j]));
-						break;
-					}
-				}
-			}
-		}
+		else
+			handle_unknown_opcodes(siccode_line);
 
 		/* Handling Instructions after END statement */
-		if (_end_set && siccode_line->mnemonic != "END") {
+		if (_end_set && siccode_line->mnemonic != "END")
 			siccode_line->errors.push_back(ERROR_AFTER_END);
-		}
+
 
 		if (_current_address && !warn_no_start && !_start_set) {
 			warn_no_start = true;
@@ -512,6 +422,54 @@ bool cListFile::parse_instructions() {
 	}
 
 	return true;
+}
+
+void cListFile::handle_unknown_opcodes(SICCodeLine* code) {
+	code->address = _current_address;
+	code->errors.push_back(ERROR_UNRECOG_OPCODE);
+
+	if (starts_with(code->mnemonic, "STAR") ||
+		starts_with(code->mnemonic, "TART") ||
+		starts_with(code->mnemonic, "STRT")) {
+		code->errors.push_back(suggest_operation("START"));
+	}
+	else if (code->mnemonic == "ND" ||
+		code->mnemonic == "EN") {
+		code->errors.push_back(suggest_operation("END"));
+	}
+	else if (starts_with(code->mnemonic, "RES") ||
+		starts_with(code->mnemonic, "RS") ||
+		starts_with(code->mnemonic, "ES") ||
+		starts_with(code->mnemonic, "RE")) {
+		code->errors.push_back(suggest_operation("RESW\' or \'RESB"));
+	}
+	else if (starts_with(code->mnemonic, "ORD") ||
+		starts_with(code->mnemonic, "WRD") ||
+		starts_with(code->mnemonic, "WOR")) {
+		code->errors.push_back(suggest_operation("WORD"));
+	}
+	else if (starts_with(code->mnemonic, "YTE") ||
+		starts_with(code->mnemonic, "BYT") ||
+		starts_with(code->mnemonic, "BTE")) {
+		code->errors.push_back(suggest_operation("BYTE"));
+	}
+	else if (starts_with(code->mnemonic, "YTE") ||
+		starts_with(code->mnemonic, "BYT") ||
+		starts_with(code->mnemonic, "BTE")) {
+		code->errors.push_back(suggest_operation("BYTE"));
+	}
+	else if (_start_set)    {
+		for (int j = 0; j < OPCODES_SIZE; ++j) {
+			if (starts_with(opcodes_mnemonic[j],
+				code->mnemonic) ||
+				starts_with(code->mnemonic,
+				opcodes_mnemonic[j])) {
+				code->errors.push_back(
+					suggest_operation(opcodes_mnemonic[j]));
+				break;
+			}
+		}
+	}
 }
 
 bool cListFile::starts_with(const string& original, const string& checkable) {

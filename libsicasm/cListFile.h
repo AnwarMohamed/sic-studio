@@ -55,6 +55,12 @@ private:
 	void handle_resw_directive(SICCodeLine* code);
 	void handle_end_directive(SICCodeLine* code);
 	void suggest_end_operand(SICCodeLine* code);
+	void handle_opcodes(SICCodeLine* code);
+	void handle_unknown_opcodes(SICCodeLine* code);
+	void handle_opcodes_single_operand(SICCodeLine* code);
+	void handle_opcodes_dual_operands(SICCodeLine* code);
+	void handle_indexed_operand(SICCodeLine* code);
+	void handle_literal(SICCodeLine* code);
 
 protected:
     int _start_address;
