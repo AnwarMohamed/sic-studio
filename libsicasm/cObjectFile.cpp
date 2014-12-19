@@ -148,7 +148,7 @@ void cObjectFile::generate_object_code() {
 			_base_address = -1;
 		}
 
-		else if (siccode_line->is_literal || 
+		else if (siccode_line->is_literal ||
 			siccode_line->mnemonic == "LTORG") {
 			continue;
 		}
@@ -242,6 +242,10 @@ void cObjectFile::generate_object_code() {
 								address = hex_to_int(
 									(char*)siccode_line->operands[0].c_str());
 							}
+							else if (siccode_line->operands_t == "=") {
+								address = _literals_table[
+									siccode_line->operands[0]]->address;
+							}
 							else {
 								address = _siccode_lines[_symbols_table[
 									siccode_line->operands[0]]
@@ -297,7 +301,7 @@ void cObjectFile::generate_object_code() {
 						(char*)siccode_line->operands[1].c_str()) & 0x0f);
 				}
 				else {
-					siccode_line->object_code[1] |= 
+					siccode_line->object_code[1] |=
 						(encode_register(siccode_line->operands[1]) & 0x0f);
 				}
 				break;
