@@ -14,6 +14,7 @@ void send_command(char *s) {
 int main(int argc, char* argv[])
 {
 
+	/*
 	char shortBuffer[MAX_PATH];
 	char cmdBuff[MAX_PATH + 64];
 
@@ -28,6 +29,7 @@ int main(int argc, char* argv[])
 		send_command(cmdBuff);
 		send_command("Play sicMP3");
 	}
+	*/
 
 	printf(
 		"\n       ___                       ___           ___           ___     \n"
@@ -78,6 +80,6 @@ int main(int argc, char* argv[])
 	printf("\n");
 	//system("PAUSE");
 	printf("\n[+] Exiting\n");
-	send_command("Close All");
+	//send_command("Close All");
 	return 0;
 }

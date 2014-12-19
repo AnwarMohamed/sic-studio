@@ -81,21 +81,19 @@ void cListFile::construct_symbol_table() {
 						siccode_line->is_variable = true;
 					}
 				}
-				else {
+				else
 					siccode_line->errors.push_back(ERROR_DUPLICATE_LABEL);
-				}
 			}
-			else {
+			else
 				siccode_line->errors.push_back(ERROR_ILLEGAL_LABEL);
-			}
 		}
 	}
 }
 
 void cListFile::handle_start_directive(SICCodeLine* code) {
-	if (_start_set) {
+	if (_start_set)
 		code->errors.push_back(ERROR_DUPLICATE_START);
-	}
+
 	else if (code->operands.size() == 1 &&
 		is_hex_number(code->operands[0])) {
 		_start_address = _current_address =
@@ -183,7 +181,6 @@ void cListFile::suggest_end_operand(SICCodeLine* code) {
 
 void cListFile::handle_end_directive(SICCodeLine* code) {
 	code->address = _current_address;
-	_current_address += 1;
 	_end_address = code->address;
 	_end_set = true;
 
@@ -232,24 +229,54 @@ void cListFile::handle_indexed_operand(SICCodeLine* code) {
 
 void cListFile::handle_literal(SICCodeLine* code) {
 	if (code->operands.size() == 1) {
-		switch (is_byte_instruction(code->operands[0])) {
 
+		switch (is_byte_instruction(code->operands[0])) {
 		case BYTE_INSTRUCTION_INVALID:
 			code->errors.push_back(ERROR_ILLEGAL_LITERAL);
 			break;
 		case BYTE_INSTRUCTION_HEX:
-			if (_literals_table.count(code->operands[0]) == 0 ||
-				_literals_table[code->operands[0]]->address != -1) {
-
-			}
-
-			_current_address += (code->operands[0].size() - 3) / 2;
+			if (_literals_table.count(code->operands[0]) == 0)
+				_literals_table[code->operands[0]] =
+				generate_hex_literal(code);
 			break;
 		case BYTE_INSTRUCTION_CHAR:
-			_current_address += (code->operands.size() - 3);
+			if (_literals_table.count(code->operands[0]) == 0)
+				_literals_table[code->operands[0]] =
+				generate_char_literal(code);
 			break;
 		}
 	}
+}
+
+SICLiteral* cListFile::generate_hex_literal(SICCodeLine* code) {
+	SICLiteral* literal = new SICLiteral;
+	literal->address = -1;
+	literal->type = BYTE_INSTRUCTION_HEX;
+
+	string str_array =
+		code->operands[0].substr(2, code->operands[0].size() - 2);
+
+	int byte;
+	for (int i = 0; i < (int)str_array.size() / 2; i++) {
+		sscanf_s(str_array.substr(2 * i, 2 * i + 2).c_str(), "%02x", &byte);
+		literal->object_code.push_back(byte & 0x000000ff);
+	}
+
+	return literal;
+}
+
+SICLiteral* cListFile::generate_char_literal(SICCodeLine* code) {
+	SICLiteral* literal = new SICLiteral;
+	literal->address = -1;
+	literal->type = BYTE_INSTRUCTION_CHAR;
+
+	string str_array =
+		code->operands[0].substr(2, code->operands[0].size() - 3);
+
+	for (int j = 0; j < (int)str_array.size(); ++j)
+		literal->object_code.push_back(str_array[j]);
+
+	return literal;
 }
 
 void cListFile::handle_opcodes_single_operand(SICCodeLine* code) {
@@ -385,17 +412,24 @@ bool cListFile::parse_instructions() {
 			handle_resb_directive(siccode_line);
 
 		/* Handling END Directive */
-		else if (siccode_line->mnemonic == "END")
+		else if (siccode_line->mnemonic == "END") {
 			handle_end_directive(siccode_line);
+			i += handle_literal_directive(siccode_line, i);
+		}
+
+		/* Handling LTORG Directive */
+		else if (siccode_line->mnemonic == "LTORG") {
+			siccode_line->address = _current_address;
+			i += handle_literal_directive(siccode_line, i);
+		}
 
 		/* Handling BASE, NOBASE Directives */
 		else if (siccode_line->mnemonic == "BASE" ||
 			siccode_line->mnemonic == "NOBASE") {
 			siccode_line->address = _current_address;
 
-			if (siccode_line->operands.size()) {
+			if (siccode_line->operands.size())
 				siccode_line->errors.push_back(ERROR_ILLEGAL_BASE);
-			}
 		}
 
 		/* Handling Opcodes */
@@ -424,46 +458,76 @@ bool cListFile::parse_instructions() {
 	return true;
 }
 
+int cListFile::handle_literal_directive(SICCodeLine* code, int index) {
+	vector<SICCodeLine*>::iterator code_it;
+	map<string, SICLiteral*>::iterator lit_it;
+	SICLiteral* literal;
+	SICCodeLine* line;
+	int generated_sum = 0;
+
+	for (lit_it = _literals_table.begin();
+		lit_it != _literals_table.end(); ++lit_it) {
+
+		literal = lit_it->second;
+		if (literal->address == -1) {
+			line = new SICCodeLine;
+			zero(line, sizeof(SICCodeLine));
+
+			code_it = _siccode_lines.begin() + index + 1 + generated_sum++;
+
+			line->label = '*';
+			line->mnemonic = lit_it->first;
+			line->address = _current_address;
+			line->is_literal = true;
+			line->object_code = literal->object_code;
+			_siccode_lines.insert(code_it, line);
+
+			_current_address += literal->object_code.size();
+			literal->address = line->address;
+		}
+	}
+
+	return generated_sum;
+}
+
 void cListFile::handle_unknown_opcodes(SICCodeLine* code) {
 	code->address = _current_address;
 	code->errors.push_back(ERROR_UNRECOG_OPCODE);
 
 	if (starts_with(code->mnemonic, "STAR") ||
 		starts_with(code->mnemonic, "TART") ||
-		starts_with(code->mnemonic, "STRT")) {
+		starts_with(code->mnemonic, "STRT"))
 		code->errors.push_back(suggest_operation("START"));
-	}
+
 	else if (code->mnemonic == "ND" ||
-		code->mnemonic == "EN") {
+		code->mnemonic == "EN")
 		code->errors.push_back(suggest_operation("END"));
-	}
+
 	else if (starts_with(code->mnemonic, "RES") ||
 		starts_with(code->mnemonic, "RS") ||
 		starts_with(code->mnemonic, "ES") ||
-		starts_with(code->mnemonic, "RE")) {
+		starts_with(code->mnemonic, "RE"))
 		code->errors.push_back(suggest_operation("RESW\' or \'RESB"));
-	}
+
 	else if (starts_with(code->mnemonic, "ORD") ||
 		starts_with(code->mnemonic, "WRD") ||
-		starts_with(code->mnemonic, "WOR")) {
+		starts_with(code->mnemonic, "WOR"))
 		code->errors.push_back(suggest_operation("WORD"));
-	}
+
 	else if (starts_with(code->mnemonic, "YTE") ||
 		starts_with(code->mnemonic, "BYT") ||
-		starts_with(code->mnemonic, "BTE")) {
+		starts_with(code->mnemonic, "BTE"))
 		code->errors.push_back(suggest_operation("BYTE"));
-	}
+
 	else if (starts_with(code->mnemonic, "YTE") ||
 		starts_with(code->mnemonic, "BYT") ||
-		starts_with(code->mnemonic, "BTE")) {
+		starts_with(code->mnemonic, "BTE"))
 		code->errors.push_back(suggest_operation("BYTE"));
-	}
+
 	else if (_start_set)    {
 		for (int j = 0; j < OPCODES_SIZE; ++j) {
-			if (starts_with(opcodes_mnemonic[j],
-				code->mnemonic) ||
-				starts_with(code->mnemonic,
-				opcodes_mnemonic[j])) {
+			if (starts_with(opcodes_mnemonic[j], code->mnemonic) ||
+				starts_with(code->mnemonic, opcodes_mnemonic[j])) {
 				code->errors.push_back(
 					suggest_operation(opcodes_mnemonic[j]));
 				break;
@@ -473,15 +537,12 @@ void cListFile::handle_unknown_opcodes(SICCodeLine* code) {
 }
 
 bool cListFile::starts_with(const string& original, const string& checkable) {
-	if (checkable.length() > original.length()) {
+	if (checkable.length() > original.length())
 		return false;
-	}
 
-	for (int i = 0; i < (int)checkable.length(); ++i) {
-		if (checkable[i] != original[i]) {
-			return false;
-		}
-	}
+	for (int i = 0; i < (int)checkable.length(); ++i)
+	if (checkable[i] != original[i])
+		return false;
 
 	return true;
 }

@@ -26,27 +26,27 @@ using namespace std;
 
 class DLLEXPORT cListFile : public cSourceFile {
 public:
-    cListFile(char* filename);
-    ~cListFile();
+	cListFile(char* filename);
+	~cListFile();
 
-    virtual void print_listfile(FILE* file=0);
+	virtual void print_listfile(FILE* file = 0);
 private:
-    bool parse_siccode_lines();
-    
-    bool _end_set;
-    bool _start_set;
-    int _current_address;
+	bool parse_siccode_lines();
 
-    
-    bool is_hex_number(string& str);
-    bool is_word_str(string& str);
-    bool is_alpha(string& str);
-    bool is_hex_byte(string& str);
-    bool is_hex_word(string& str);
-    
-    void construct_symbol_table();
-    bool parse_instructions();
-    string suggest_operation(string operation);	
+	bool _end_set;
+	bool _start_set;
+	int _current_address;
+
+
+	bool is_hex_number(string& str);
+	bool is_word_str(string& str);
+	bool is_alpha(string& str);
+	bool is_hex_byte(string& str);
+	bool is_hex_word(string& str);
+
+	void construct_symbol_table();
+	bool parse_instructions();
+	string suggest_operation(string operation);
 
 	void handle_start_directive(SICCodeLine* code);
 	void handle_word_directive(SICCodeLine* code);
@@ -54,6 +54,7 @@ private:
 	void handle_resb_directive(SICCodeLine* code);
 	void handle_resw_directive(SICCodeLine* code);
 	void handle_end_directive(SICCodeLine* code);
+	int handle_literal_directive(SICCodeLine* code, int index);
 	void suggest_end_operand(SICCodeLine* code);
 	void handle_opcodes(SICCodeLine* code);
 	void handle_unknown_opcodes(SICCodeLine* code);
@@ -62,22 +63,25 @@ private:
 	void handle_indexed_operand(SICCodeLine* code);
 	void handle_literal(SICCodeLine* code);
 
-protected:
-    int _start_address;
-    int _end_address;
-    string _program_name;
+	SICLiteral* generate_hex_literal(SICCodeLine* code);
+	SICLiteral* generate_char_literal(SICCodeLine* code);
 
-    map<string, int> _symbols_table;
+protected:
+	int _start_address;
+	int _end_address;
+	string _program_name;
+
+	map<string, int> _symbols_table;
 	map<string, SICLiteral*> _literals_table;
 
-    int str_to_int(char* str);
-    int hex_to_int(char* hex);
+	int str_to_int(char* str);
+	int hex_to_int(char* hex);
 	bool is_numeric(string& str);
 
 	char encode_register(string &reg);
 
-    string merge_operands(vector<string> &operands);
-    bool starts_with(const string& haystack, const string& needle);
+	string merge_operands(vector<string> &operands);
+	bool starts_with(const string& haystack, const string& needle);
 
 	char is_byte_instruction(string& inst);
 };

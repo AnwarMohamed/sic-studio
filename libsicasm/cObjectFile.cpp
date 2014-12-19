@@ -148,6 +148,11 @@ void cObjectFile::generate_object_code() {
 			_base_address = -1;
 		}
 
+		else if (siccode_line->is_literal || 
+			siccode_line->mnemonic == "LTORG") {
+			continue;
+		}
+
 		else {
 			siccode_line->object_code.push_back(
 				siccode_line->opcode_ref->opcode);
