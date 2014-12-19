@@ -51,6 +51,8 @@
 #define ERROR_ILLEGAL_INDIRECT  "illegal indirect operand"
 #define ERROR_ILLEGAL_BASE      "illegal operand in base statement"
 #define ERROR_ILLEGAL_LITERAL   "illegal operand in literal statement"
+#define ERROR_ILLEGAL_EQU		"illegal equ statement"
+#define ERROR_ILLEGAL_ORG		"illegal org statement"
 
 #define BYTE_INSTRUCTION_INVALID	0x00
 #define BYTE_INSTRUCTION_HEX		0x01
@@ -65,6 +67,7 @@ cListFile::cListFile(char* filename) : cSourceFile(filename) {
 
 void cListFile::construct_symbol_table() {
 	SICCodeLine* siccode_line;
+	SICSymbol* symbol;
 
 	for (int i = 0; i < (int)_siccode_lines.size(); ++i) {
 		siccode_line = _siccode_lines[i];
@@ -72,13 +75,23 @@ void cListFile::construct_symbol_table() {
 		if (siccode_line->label.size()) {
 			if (is_alpha(siccode_line->label)) {
 				if (_symbols_table.count(siccode_line->label) == 0) {
-					_symbols_table[siccode_line->label] = i;
 
-					if (siccode_line->mnemonic == "RESB" ||
-						siccode_line->mnemonic == "RESW" ||
-						siccode_line->mnemonic == "BYTE" ||
-						siccode_line->mnemonic == "WORD") {
-						siccode_line->is_variable = true;
+					if (siccode_line->mnemonic == "EQU") {
+						handle_equ_directive(siccode_line);
+					}
+					else {
+						symbol = new SICSymbol;
+						zero(symbol, sizeof(SICSymbol));
+						symbol->address = i;
+
+						_symbols_table[siccode_line->label] = symbol;
+
+						if (siccode_line->mnemonic == "RESB" ||
+							siccode_line->mnemonic == "RESW" ||
+							siccode_line->mnemonic == "BYTE" ||
+							siccode_line->mnemonic == "WORD") {
+							siccode_line->is_variable = true;
+						}
 					}
 				}
 				else
@@ -167,13 +180,13 @@ void cListFile::handle_resw_directive(SICCodeLine* code) {
 }
 
 void cListFile::suggest_end_operand(SICCodeLine* code) {
-	for (map<string, int>::iterator j = _symbols_table.begin();
+	for (map<string, SICSymbol*>::iterator j = _symbols_table.begin();
 		j != _symbols_table.end(); ++j) {
-		if (_siccode_lines[j->second]->mnemonic == "START" &&
-			_siccode_lines[j->second]->label.size()) {
+		if (_siccode_lines[j->second->address]->mnemonic == "START" &&
+			_siccode_lines[j->second->address]->label.size()) {
 			code->errors.push_back(
 				suggest_operation(
-				_siccode_lines[j->second]->label));
+				_siccode_lines[j->second->address]->label));
 			break;
 		}
 	}
@@ -191,7 +204,6 @@ void cListFile::handle_end_directive(SICCodeLine* code) {
 		if (_start_set){
 			suggest_end_operand(code);
 		}
-
 	}
 }
 
@@ -200,7 +212,8 @@ void cListFile::handle_indexed_operand(SICCodeLine* code) {
 
 	if (code->operands_t == "@") {
 		if (_symbols_table.count(code->operands[0]) == 1 &&
-			_siccode_lines[_symbols_table[code->operands[0]]]->is_variable) {
+			_siccode_lines[_symbols_table[
+				code->operands[0]]->address]->is_variable) {
 			code->is_indirect = true;
 		}
 		else {
@@ -209,7 +222,8 @@ void cListFile::handle_indexed_operand(SICCodeLine* code) {
 	}
 	else if (code->operands_t == "#") {
 		if (_symbols_table.count(code->operands[0]) == 1 &&
-			_siccode_lines[_symbols_table[code->operands[0]]]->is_variable) {
+			_siccode_lines[_symbols_table[
+				code->operands[0]]->address]->is_variable) {
 			code->is_indirect = true;
 		}
 		else if (is_hex_word(code->operands[0])) {
@@ -262,6 +276,15 @@ SICLiteral* cListFile::generate_hex_literal(SICCodeLine* code) {
 		literal->object_code.push_back(byte & 0x000000ff);
 	}
 
+	map<string, SICLiteral*>::iterator lit_it;
+	for (lit_it = _literals_table.begin();
+		lit_it != _literals_table.end(); ++lit_it) {
+		if (lit_it->second->object_code == literal->object_code) {
+			delete literal;
+			return lit_it->second;
+		}
+	}
+
 	return literal;
 }
 
@@ -275,6 +298,15 @@ SICLiteral* cListFile::generate_char_literal(SICCodeLine* code) {
 
 	for (int j = 0; j < (int)str_array.size(); ++j)
 		literal->object_code.push_back(str_array[j]);
+
+	map<string, SICLiteral*>::iterator lit_it;
+	for (lit_it = _literals_table.begin();
+		lit_it != _literals_table.end(); ++lit_it) {
+		if (lit_it->second->object_code == literal->object_code) {
+			delete literal;
+			return lit_it->second;
+		}
+	}
 
 	return literal;
 }
@@ -310,7 +342,8 @@ void cListFile::handle_opcodes_single_operand(SICCodeLine* code) {
 
 				if (_symbols_table.count(code->operands[0]) == 1 &&
 					_siccode_lines[
-						_symbols_table[code->operands[0]]]->is_variable) {
+						_symbols_table[
+							code->operands[0]]->address]->is_variable) {
 				}
 				else
 					code->errors.push_back(ERROR_UNDEFINED_SYM);
@@ -375,6 +408,44 @@ void cListFile::handle_opcodes(SICCodeLine* code) {
 	}
 }
 
+void cListFile::handle_equ_directive(SICCodeLine* code) {
+	if (!code->label.size() || code->operands.size() != 1) {
+		code->errors.push_back(ERROR_ILLEGAL_EQU);
+		return;
+	}
+	else if (!is_alpha(code->label)) {
+		code->errors.push_back(ERROR_ILLEGAL_LABEL);
+		return;
+	}
+
+	SICSymbol* symbol = new SICSymbol;
+	zero(symbol, sizeof(SICSymbol));
+	symbol->is_macro = true;
+
+	if (is_numeric(code->operands[0])) {
+		symbol->address = str_to_int((char*)code->operands[0].c_str());
+		_symbols_table[code->label] = symbol;
+	}
+	else if (_symbols_table.count(code->operands[0]) == 1) {
+		symbol->is_symbolic = true;
+		symbol->address = _symbols_table[code->operands[0]]->address;
+		_symbols_table[code->label] = symbol;
+	}
+	else {
+		code->errors.push_back(ERROR_ILLEGAL_OPERAND);
+		delete symbol;
+	}
+}
+
+void cListFile::handle_org_directive(SICCodeLine* code) {
+	if (!code->operands.size()) {
+		code->errors.push_back(ERROR_ILLEGAL_ORG);
+		return;
+	}
+
+
+}
+
 bool cListFile::parse_instructions() {
 	if (!_siccode_lines.size())
 		return false;
@@ -410,6 +481,14 @@ bool cListFile::parse_instructions() {
 		/* Handling RESB Directive */
 		else if (siccode_line->mnemonic == "RESB")
 			handle_resb_directive(siccode_line);
+
+		/* Handling EQU Directive */
+		else if (siccode_line->mnemonic == "EQU")
+			siccode_line->address = _current_address;
+
+		/* Handling ORG Directive */
+		else if (siccode_line->mnemonic == "ORG")
+			handle_equ_directive(siccode_line);
 
 		/* Handling END Directive */
 		else if (siccode_line->mnemonic == "END") {

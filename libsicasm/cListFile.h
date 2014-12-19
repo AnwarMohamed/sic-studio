@@ -54,6 +54,8 @@ private:
 	void handle_resb_directive(SICCodeLine* code);
 	void handle_resw_directive(SICCodeLine* code);
 	void handle_end_directive(SICCodeLine* code);
+	void handle_equ_directive(SICCodeLine* code);
+	void handle_org_directive(SICCodeLine* code);
 	int handle_literal_directive(SICCodeLine* code, int index);
 	void suggest_end_operand(SICCodeLine* code);
 	void handle_opcodes(SICCodeLine* code);
@@ -71,7 +73,7 @@ protected:
 	int _end_address;
 	string _program_name;
 
-	map<string, int> _symbols_table;
+	map<string, SICSymbol*> _symbols_table;
 	map<string, SICLiteral*> _literals_table;
 
 	int str_to_int(char* str);

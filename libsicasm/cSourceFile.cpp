@@ -59,7 +59,6 @@ void cSourceFile::parse_sourcefile() {
 	char *ptr = (char*)BaseAddress, *lptr = ptr;
 	SICCodeLine* line;
 
-	/* PASS 1 */
 	for (int i = 0; i < (int)FileLength - 1;) {
 		if ((ptr[i] == '\r' && ptr[i + 1] == '\n') || ptr[i] == '\n' ||
 			i + 2 == FileLength) {
@@ -101,7 +100,8 @@ void cSourceFile::parse_sourcefile() {
 				label_word == "BASE" || label_word == "NOBASE" ||
 				label_word == "RESW" || label_word == "RESB" ||
 				label_word == "BYTE" || label_word == "WORD" ||
-				label_word == "LTORG") {
+				label_word == "LTORG" || label_word == "EQU" ||
+				label_word == "ORD") {
 				split_strings(line, _sourcefile_line, true);
 			}
 			else {

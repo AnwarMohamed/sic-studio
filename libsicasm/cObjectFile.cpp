@@ -153,6 +153,10 @@ void cObjectFile::generate_object_code() {
 			continue;
 		}
 
+		else if (siccode_line->mnemonic == "EQU") {
+
+		}
+
 		else {
 			siccode_line->object_code.push_back(
 				siccode_line->opcode_ref->opcode);
@@ -184,7 +188,7 @@ void cObjectFile::generate_object_code() {
 
 					siccode_line->object_code.push_back(
 						(char)(_siccode_lines[_symbols_table[
-							siccode_line->operands[0]]
+							siccode_line->operands[0]]->address
 						]->address));
 
 					if (siccode_line->is_indexed) {
@@ -231,7 +235,7 @@ void cObjectFile::generate_object_code() {
 							else {
 								address = _siccode_lines[_symbols_table[
 									siccode_line->operands[0].substr(1,
-										siccode_line->operands[0].size())]
+										siccode_line->operands[0].size())]->address
 								]->address;
 							}
 						}
@@ -248,7 +252,7 @@ void cObjectFile::generate_object_code() {
 							}
 							else {
 								address = _siccode_lines[_symbols_table[
-									siccode_line->operands[0]]
+									siccode_line->operands[0]]->address
 								]->address;
 							}
 						}

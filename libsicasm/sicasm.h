@@ -177,6 +177,12 @@ struct SICOpCode {
     char operands;
 };
 
+struct SICSymbol {
+	int address;
+	bool is_macro;
+	bool is_symbolic;
+};
+
 struct SICCodeLine {
     int address;
     string label;
