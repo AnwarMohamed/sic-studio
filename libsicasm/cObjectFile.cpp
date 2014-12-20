@@ -180,8 +180,12 @@ void cObjectFile::handle_opcodes_single_operand(SICCodeLine* code, int index) {
 				else {
 
 					if (_symbols_table[code->operands[0]]->is_macro &&
-						!_symbols_table[code->operands[0]]->is_symbolic)
+						!_symbols_table[code->operands[0]]->is_symbolic) {
 						address = _symbols_table[code->operands[0]]->address;
+
+						if (address > 0x0fff)
+							code->is_xe4 = true;
+					}
 					else
 						address = _siccode_lines[_symbols_table[
 							code->operands[0]]->address]->address;

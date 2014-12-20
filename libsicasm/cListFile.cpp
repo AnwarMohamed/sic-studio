@@ -61,6 +61,7 @@
 cListFile::cListFile(char* filename) : cSourceFile(filename) {
 	_end_set = false;
 	_start_set = false;
+	_address_offset = 0;
 
 	is_ready = is_ready ? parse_siccode_lines() : false;
 }

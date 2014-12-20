@@ -83,12 +83,14 @@
   <ItemGroup>
     <ClCompile Include="cFile.cpp" />
     <ClCompile Include="cListFile.cpp" />
+    <ClCompile Include="cListLine.cpp" />
     <ClCompile Include="cObjectFile.cpp" />
     <ClCompile Include="cSourceFile.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="cFile.h" />
     <ClInclude Include="cListFile.h" />
+    <ClInclude Include="cListLine.h" />
     <ClInclude Include="cObjectFile.h" />
     <ClInclude Include="cSourceFile.h" />
     <ClInclude Include="resource.h" />

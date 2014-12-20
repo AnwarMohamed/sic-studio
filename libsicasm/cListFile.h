@@ -36,6 +36,7 @@ private:
 	bool _end_set;
 	bool _start_set;
 	int _current_address;
+	int _address_offset;
 
 
 	bool is_hex_number(string& str);
