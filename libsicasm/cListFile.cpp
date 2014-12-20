@@ -428,11 +428,11 @@ void cListFile::handle_equ_directive(SICCodeLine* code) {
 	}
 	else if (_symbols_table.count(code->operands[0]) == 1) {
 		symbol->is_symbolic = true;
-		symbol->address = _symbols_table[code->operands[0]]->address;
+		symbol->address = get_symbol_value(code->operands[0]);
 		_symbols_table[code->label] = symbol;
 	}
 	else {
-		code->errors.push_back(ERROR_ILLEGAL_OPERAND);
+		code->errors.push_back(ERROR_ILLEGAL_EQU);
 		delete symbol;
 	}
 }
@@ -444,6 +444,20 @@ void cListFile::handle_org_directive(SICCodeLine* code) {
 	}
 
 
+}
+
+int cListFile::get_symbol_value(string& key) {
+
+	return _symbols_table[key]->address;
+
+	if (_symbols_table[key]->is_macro) {
+		if (_symbols_table[key]->is_symbolic)
+			return _siccode_lines[_symbols_table[key]->address]->address;
+		else
+			return _symbols_table[key]->address;
+	}
+	else
+		return _siccode_lines[_symbols_table[key]->address]->address;
 }
 
 bool cListFile::parse_instructions() {
@@ -483,12 +497,14 @@ bool cListFile::parse_instructions() {
 			handle_resb_directive(siccode_line);
 
 		/* Handling EQU Directive */
-		else if (siccode_line->mnemonic == "EQU")
+		else if (siccode_line->mnemonic == "EQU") {
 			siccode_line->address = _current_address;
+			handle_equ_directive(siccode_line);
+		}
 
 		/* Handling ORG Directive */
 		else if (siccode_line->mnemonic == "ORG")
-			handle_equ_directive(siccode_line);
+			handle_org_directive(siccode_line);
 
 		/* Handling END Directive */
 		else if (siccode_line->mnemonic == "END") {

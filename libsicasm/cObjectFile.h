@@ -43,5 +43,10 @@ private:
     string _object_code;
 
 	int _base_address;
+
+	void handle_byte_directive(SICCodeLine* code);
+	void handle_opcodes_single_operand(SICCodeLine* code, int index);
+	void handle_opcodes_dual_operands(SICCodeLine* code);
+	void handle_opcodes_no_operand(SICCodeLine* code);
 };
 

@@ -67,7 +67,7 @@ private:
 
 	SICLiteral* generate_hex_literal(SICCodeLine* code);
 	SICLiteral* generate_char_literal(SICCodeLine* code);
-
+	
 protected:
 	int _start_address;
 	int _end_address;
@@ -86,5 +86,6 @@ protected:
 	bool starts_with(const string& haystack, const string& needle);
 
 	char is_byte_instruction(string& inst);
+	int get_symbol_value(string& key);
 };
 
