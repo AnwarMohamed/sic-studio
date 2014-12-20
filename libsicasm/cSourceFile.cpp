@@ -101,7 +101,7 @@ void cSourceFile::parse_sourcefile() {
 				label_word == "RESW" || label_word == "RESB" ||
 				label_word == "BYTE" || label_word == "WORD" ||
 				label_word == "LTORG" || label_word == "EQU" ||
-				label_word == "ORD") {
+				label_word == "ORG") {
 				split_strings(line, _sourcefile_line, true);
 			}
 			else {

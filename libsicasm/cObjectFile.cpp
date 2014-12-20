@@ -295,6 +295,10 @@ void cObjectFile::generate_object_code() {
 
 		}
 
+		else if (siccode_line->mnemonic == "ORG") {
+
+		}
+
 		else {
 			siccode_line->object_code.push_back(
 				siccode_line->opcode_ref->opcode);

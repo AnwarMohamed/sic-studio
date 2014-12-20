@@ -367,12 +367,12 @@ void cListFile::handle_opcodes_single_operand(SICCodeLine* code) {
 void cListFile::handle_opcodes_dual_operands(SICCodeLine* code) {
 	if (code->operands.size() == 2) {
 		if ((code->mnemonic == "SHIFTL" || code->mnemonic == "SHIFTR") &&
-			encode_register(code->operands[0]) != -1 &&
-			str_to_int((char*)code->operands[1].c_str()) < 16) {
+			is_register(get_value_from_expression(code->operands[0])) &&
+			is_byte(get_value_from_expression(code->operands[1]))) {
 
 		}
-		else if (encode_register(code->operands[0]) != -1 &&
-			encode_register(code->operands[1]) != -1) {
+		else if (is_register(get_value_from_expression(code->operands[0])) &&
+			is_register(get_value_from_expression(code->operands[1]))) {
 
 		}
 		else
@@ -380,6 +380,36 @@ void cListFile::handle_opcodes_dual_operands(SICCodeLine* code) {
 	}
 	else
 		code->errors.push_back(ERROR_ILLEGAL_OPERAND);
+}
+
+bool cListFile::is_byte(int number) {
+	return number >= 0 && number < 16;
+}
+
+bool cListFile::is_register(int number) {
+	switch (number) {
+	case '0':
+	case '1':
+	case '2':
+	case '3':
+	case '4':
+	case '5':
+	case '6':
+		return true;
+	default:
+		return false;
+	}
+}
+
+int cListFile::get_value_from_expression(string& operand) {
+	if (is_numeric(operand))
+		return str_to_int((char*)operand.c_str());
+
+	else if (is_alpha(operand)) {
+		if (_symbols_table.count(operand) == 1)
+			return get_symbol_value(operand);
+	}
+	return -1;
 }
 
 void cListFile::handle_opcodes(SICCodeLine* code) {
@@ -409,20 +439,7 @@ void cListFile::handle_opcodes(SICCodeLine* code) {
 	}
 }
 
-void cListFile::handle_equ_directive(SICCodeLine* code) {
-	if (!code->label.size() || code->operands.size() != 1) {
-		code->errors.push_back(ERROR_ILLEGAL_EQU);
-		return;
-	}
-	else if (!is_alpha(code->label)) {
-		code->errors.push_back(ERROR_ILLEGAL_LABEL);
-		return;
-	}
-
-	SICSymbol* symbol = new SICSymbol;
-	zero(symbol, sizeof(SICSymbol));
-	symbol->is_macro = true;
-
+void cListFile::handle_symbol_expression(SICCodeLine* code, SICSymbol* symbol) {
 	if (is_numeric(code->operands[0])) {
 		symbol->address = str_to_int((char*)code->operands[0].c_str());
 		_symbols_table[code->label] = symbol;
@@ -438,27 +455,40 @@ void cListFile::handle_equ_directive(SICCodeLine* code) {
 	}
 }
 
-void cListFile::handle_org_directive(SICCodeLine* code) {
-	if (!code->operands.size()) {
-		code->errors.push_back(ERROR_ILLEGAL_ORG);
+void cListFile::handle_equ_directive(SICCodeLine* code) {
+	if (!code->label.size() || code->operands.size() != 1) {
+		code->errors.push_back(ERROR_ILLEGAL_EQU);
+		return;
+	}
+	else if (!is_alpha(code->label)) {
+		code->errors.push_back(ERROR_ILLEGAL_LABEL);
 		return;
 	}
 
+	SICSymbol* symbol = new SICSymbol;
+	zero(symbol, sizeof(SICSymbol));
+	symbol->is_macro = true;
 
+	handle_symbol_expression(code, symbol);
+}
+
+void cListFile::handle_org_directive(SICCodeLine* code) {
+	if (!code->operands.size()) {
+		_current_address -= _address_offset;
+		_address_offset = 0;
+	}
+	else if (code->operands.size() == 1 &&
+		get_value_from_expression(code->operands[0]) >= 0) {
+		_current_address -= _address_offset;
+		_address_offset = get_value_from_expression(code->operands[0]);
+		_current_address += _address_offset;
+	}
+	else
+		code->errors.push_back(ERROR_ILLEGAL_ORG);
 }
 
 int cListFile::get_symbol_value(string& key) {
-
 	return _symbols_table[key]->address;
-
-	if (_symbols_table[key]->is_macro) {
-		if (_symbols_table[key]->is_symbolic)
-			return _siccode_lines[_symbols_table[key]->address]->address;
-		else
-			return _symbols_table[key]->address;
-	}
-	else
-		return _siccode_lines[_symbols_table[key]->address]->address;
 }
 
 bool cListFile::parse_instructions() {
@@ -474,8 +504,12 @@ bool cListFile::parse_instructions() {
 	for (int i = 0; i < (int)_siccode_lines.size(); ++i) {
 		siccode_line = _siccode_lines[i];
 
-		if (siccode_line->is_comment)
+		_current_address += _address_offset;
+
+		if (siccode_line->is_comment) {
+			_current_address += _address_offset;
 			continue;
+		}
 
 		/* Handling START Directive */
 		if (siccode_line->mnemonic == "START")
@@ -549,6 +583,8 @@ bool cListFile::parse_instructions() {
 			_start_address = _current_address = 0;
 			_siccode_lines[0]->errors.push_back(ERROR_MISSING_START);
 		}
+
+		_current_address -= _address_offset;
 	}
 
 	return true;
