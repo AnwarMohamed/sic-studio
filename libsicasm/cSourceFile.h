@@ -34,7 +34,7 @@ public:
     cSourceFile(char* filename);
     ~cSourceFile();
 
-	bool is_ready;
+    bool is_ready;
 
 protected:
     vector<SICCodeLine*> _siccode_lines;

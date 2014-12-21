@@ -26,8 +26,8 @@ public:
     cObjectFile(char* filename);
     ~cObjectFile();
 
-    void print_listfile(FILE* file=0);
-    void print_objectfile(FILE* file=0);
+    void print_listfile(FILE* file = 0);
+    void print_objectfile(FILE* file = 0);
     void generate_objectfile();
 
 private:
@@ -42,11 +42,11 @@ private:
 
     string _object_code;
 
-	int _base_address;
+    int _base_address;
 
-	void handle_byte_directive(SICCodeLine* code);
-	void handle_opcodes_single_operand(SICCodeLine* code, int index);
-	void handle_opcodes_dual_operands(SICCodeLine* code);
-	void handle_opcodes_no_operand(SICCodeLine* code);
+    void handle_byte_directive(SICCodeLine* code);
+    void handle_opcodes_single_operand(SICCodeLine* code, int index);
+    void handle_opcodes_dual_operands(SICCodeLine* code);
+    void handle_opcodes_no_operand(SICCodeLine* code);
 };
 

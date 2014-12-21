@@ -5,26 +5,26 @@ cFile::cFile(char* Filename)
     IsReassembled = FALSE;
     Attributes = GetFileAttributes(Filename);
     hFile = CreateFileA(Filename,
-                        GENERIC_READ,
-                        FILE_SHARE_READ | FILE_SHARE_WRITE,
-                        NULL,
-                        OPEN_EXISTING,
-                        FILE_ATTRIBUTE_NORMAL,
-                        0);
-    
+        GENERIC_READ,
+        FILE_SHARE_READ | FILE_SHARE_WRITE,
+        NULL,
+        OPEN_EXISTING,
+        FILE_ATTRIBUTE_NORMAL,
+        0);
+
     if (hFile == INVALID_HANDLE_VALUE)
     {
         BaseAddress = NULL;
         FileLength = NULL;
         return;
     }
-    
+
     hMapping = CreateFileMappingW(hFile,
-                                  NULL,
-                                  PAGE_READONLY,
-                                  0,
-                                  0,
-                                  NULL);
+        NULL,
+        PAGE_READONLY,
+        0,
+        0,
+        NULL);
     if (hMapping == 0)
     {
         CloseHandle(hFile);
@@ -33,11 +33,11 @@ cFile::cFile(char* Filename)
         return;
     }
 
-    BaseAddress = (unsigned long) MapViewOfFile(hMapping,
-                                                FILE_MAP_READ,
-                                                0,
-                                                0,
-                                                0);
+    BaseAddress = (unsigned long)MapViewOfFile(hMapping,
+        FILE_MAP_READ,
+        0,
+        0,
+        0);
     if (hMapping == 0)
     {
         UnmapViewOfFile(hMapping);
@@ -46,10 +46,10 @@ cFile::cFile(char* Filename)
         FileLength = NULL;
         return;
     }
-    
-    FileLength  = (DWORD) GetFileSize(hFile,NULL);
-    this->Filename = new CHAR[strlen(Filename)+1];
-    strcpy_s(this->Filename, strlen(Filename)+1, Filename);
+
+    FileLength = (DWORD)GetFileSize(hFile, NULL);
+    this->Filename = new CHAR[strlen(Filename) + 1];
+    strcpy_s(this->Filename, strlen(Filename) + 1, Filename);
 
     IsFile = TRUE;
     return;
