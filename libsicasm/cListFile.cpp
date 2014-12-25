@@ -58,6 +58,8 @@
 #define BYTE_INSTRUCTION_HEX		0x01
 #define BYTE_INSTRUCTION_CHAR		0x02
 
+#define MIN_INT (-2147483647L - 1)
+
 cListFile::cListFile(char* filename) : cSourceFile(filename) {
     _end_set = false;
     _start_set = false;
@@ -409,7 +411,7 @@ int cListFile::get_value_from_expression(string& operand) {
         if (_symbols_table.count(operand) == 1)
             return get_symbol_value(operand);
     }
-    return -1;
+    return MIN_INT;
 }
 
 void cListFile::handle_opcodes(SICCodeLine* code) {
@@ -481,9 +483,15 @@ void cListFile::handle_org_directive(SICCodeLine* code) {
     else if (code->operands.size() == 1 &&
         get_value_from_expression(code->operands[0]) >= 0) {
         _current_address -= _address_offset;
-        _address_offset = get_value_from_expression(code->operands[0]) - _current_address;
-        _current_address += _address_offset;
-        code->address = _current_address;
+        _address_offset = get_value_from_expression(code->operands[0]);
+
+        if (_address_offset != MIN_INT) {
+            _address_offset -= _current_address;
+            _current_address += _address_offset;
+            code->address = _current_address;
+        }
+        else
+            code->errors.push_back(ERROR_ILLEGAL_ORG);
     }
     else
         code->errors.push_back(ERROR_ILLEGAL_ORG);
@@ -598,7 +606,7 @@ bool cListFile::parse_instructions() {
 int cListFile::handle_literal_directive(SICCodeLine* code, int index) {
     vector<SICCodeLine*>::iterator code_it;
     map<string, SICLiteral*>::iterator lit_it;
-    map<string, SICSymbol*>::iterator symbol_lit;
+    map<string, SICSymbol*>::iterator symbol_it;
     SICLiteral* literal;
     SICCodeLine* line;
     int generated_sum = 0;
@@ -623,10 +631,12 @@ int cListFile::handle_literal_directive(SICCodeLine* code, int index) {
             _current_address += literal->object_code.size();
             literal->address = line->address;
 
-            for (symbol_lit = _symbols_table.begin();
-                symbol_lit != _symbols_table.end(); ++symbol_lit) {
-                if (symbol_lit->second->address > index + 1) {
-                    ++symbol_lit->second->address;
+            for (symbol_it = _symbols_table.begin();
+                symbol_it != _symbols_table.end(); ++symbol_it) {
+                if (!(symbol_it->second->is_macro &&
+                    !symbol_it->second->is_symbolic) &&
+                    symbol_it->second->address > index + 1) {
+                    ++symbol_it->second->address;
                 }
             }
         }

@@ -66,6 +66,7 @@ private:
     void handle_indexed_operand(SICCodeLine* code);
     void handle_literal(SICCodeLine* code);
     void handle_symbol_expression(SICCodeLine* code, SICSymbol* symbol);
+
     int get_value_from_expression(string& operand);
 
     SICLiteral* generate_hex_literal(SICCodeLine* code);
