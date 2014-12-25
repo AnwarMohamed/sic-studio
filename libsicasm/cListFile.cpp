@@ -446,7 +446,7 @@ void cListFile::handle_symbol_expression(SICCodeLine* code, SICSymbol* symbol) {
     }
     else if (_symbols_table.count(code->operands[0]) == 1) {
         symbol->is_symbolic = true;
-        symbol->address = get_symbol_value(code->operands[0]);
+        symbol->address = _symbols_table[code->operands[0]]->address;
         _symbols_table[code->label] = symbol;
     }
     else {
@@ -476,19 +476,24 @@ void cListFile::handle_org_directive(SICCodeLine* code) {
     if (!code->operands.size()) {
         _current_address -= _address_offset;
         _address_offset = 0;
+        code->address = _current_address;
     }
     else if (code->operands.size() == 1 &&
         get_value_from_expression(code->operands[0]) >= 0) {
         _current_address -= _address_offset;
-        _address_offset = get_value_from_expression(code->operands[0]);
+        _address_offset = get_value_from_expression(code->operands[0]) - _current_address;
         _current_address += _address_offset;
+        code->address = _current_address;
     }
     else
         code->errors.push_back(ERROR_ILLEGAL_ORG);
 }
 
 int cListFile::get_symbol_value(string& key) {
-    return _symbols_table[key]->address;
+    if (_symbols_table[key]->is_macro)
+        return _symbols_table[key]->address;
+    else
+        return _siccode_lines[_symbols_table[key]->address]->address;
 }
 
 bool cListFile::parse_instructions() {
@@ -507,7 +512,7 @@ bool cListFile::parse_instructions() {
         _current_address += _address_offset;
 
         if (siccode_line->is_comment) {
-            _current_address += _address_offset;
+            _current_address -= _address_offset;
             continue;
         }
 
@@ -593,6 +598,7 @@ bool cListFile::parse_instructions() {
 int cListFile::handle_literal_directive(SICCodeLine* code, int index) {
     vector<SICCodeLine*>::iterator code_it;
     map<string, SICLiteral*>::iterator lit_it;
+    map<string, SICSymbol*>::iterator symbol_lit;
     SICLiteral* literal;
     SICCodeLine* line;
     int generated_sum = 0;
@@ -616,6 +622,13 @@ int cListFile::handle_literal_directive(SICCodeLine* code, int index) {
 
             _current_address += literal->object_code.size();
             literal->address = line->address;
+
+            for (symbol_lit = _symbols_table.begin();
+                symbol_lit != _symbols_table.end(); ++symbol_lit) {
+                if (symbol_lit->second->address > index + 1) {
+                    ++symbol_lit->second->address;
+                }
+            }
         }
     }
 
