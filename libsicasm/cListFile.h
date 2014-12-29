@@ -21,6 +21,8 @@
 #pragma once
 #include "sicasm.h"
 #include "cSourceFile.h"
+#include <stack>
+#include <queue>
 
 using namespace std;
 
@@ -38,6 +40,14 @@ private:
     int _current_address;
     int _address_offset;
 
+    string _current_block;
+
+    bool infix_to_posfix(string infix);
+    bool is_operator(char current_char);
+    bool precedence(char left, char right);
+    stack<char> expression_stack;
+    queue<string> expression;
+    string expression_child;
 
     bool is_hex_number(string& str);
     bool is_word_str(string& str);
@@ -57,7 +67,9 @@ private:
     void handle_end_directive(SICCodeLine* code);
     void handle_equ_directive(SICCodeLine* code);
     void handle_org_directive(SICCodeLine* code);
+    void handle_use_directive(SICCodeLine* code);
     int handle_literal_directive(SICCodeLine* code, int index);
+
     void suggest_end_operand(SICCodeLine* code);
     void handle_opcodes(SICCodeLine* code);
     void handle_unknown_opcodes(SICCodeLine* code);
@@ -82,6 +94,7 @@ protected:
 
     map<string, SICSymbol*> _symbols_table;
     map<string, SICLiteral*> _literals_table;
+    map<string, int> _blocks_table;
 
     int str_to_int(char* str);
     int hex_to_int(char* hex);

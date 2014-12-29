@@ -23,43 +23,6 @@
 #include <cctype>
 #include <climits>
 
-#define zero(o, s) memset(o, 0, s);
-
-#define ERROR_MISSING_OPCODE    "missing operation code"
-#define ERROR_UNRECOG_OPCODE    "unrecognized operation code"
-#define ERROR_ILLEGAL_OPCODE    "illegal operation code format"
-#define ERROR_ILLEGAL_OPCODE_V3 "not a format 4 operation code"
-#define ERROR_MISSING_OPERAND   "missing or misplaced operand in mnemonic"
-#define ERROR_ILLEGAL_OPERAND   "illegal operand in mnemonic"
-#define ERROR_UNDEFINED_SYM     "undefined symbol in operand"
-#define ERROR_MISSING_START     "missing or misplaced start statement"
-#define ERROR_ILLEGAL_START     "illegal operand in start statement"
-#define ERROR_DUPLICATE_START   "duplicate or misplaced start statement"
-#define ERROR_OPERAND_END       "missing or misplaced operand in end statement"
-#define ERROR_AFTER_END         "statement should not follow end statement"
-#define ERROR_OPERAND_WORD      "missing or misplaced operand in word statement"
-#define ERROR_ILLEGAL_WORD      "illegal operand in word statement"
-#define ERROR_OPERAND_RESW      "missing or misplaced operand in resw statement"
-#define ERROR_ILLEGAL_RESW      "illegal operand in resw statement"
-#define ERROR_OPERAND_RESB      "missing or misplaced operand in resb statement"
-#define ERROR_ILLEGAL_RESB      "illegal operand in resb statement"
-#define ERROR_OPERAND_BYTE      "missing or misplaced operand in byte statement"
-#define ERROR_ILLEGAL_BYTE      "illegal operand in byte statement"
-#define ERROR_DUPLICATE_LABEL   "duplicate label definition"
-#define ERROR_ILLEGAL_LABEL     "illegal format in label field"
-#define ERROR_SUGGEST           "do you mean"
-#define ERROR_ILLEGAL_INDIRECT  "illegal indirect operand"
-#define ERROR_ILLEGAL_BASE      "illegal operand in base statement"
-#define ERROR_ILLEGAL_LITERAL   "illegal operand in literal statement"
-#define ERROR_ILLEGAL_EQU		"illegal equ statement"
-#define ERROR_ILLEGAL_ORG		"illegal org statement"
-
-#define BYTE_INSTRUCTION_INVALID	0x00
-#define BYTE_INSTRUCTION_HEX		0x01
-#define BYTE_INSTRUCTION_CHAR		0x02
-
-#define MIN_INT (-2147483647L - 1)
-
 cListFile::cListFile(char* filename) : cSourceFile(filename) {
     _end_set = false;
     _start_set = false;
@@ -115,11 +78,13 @@ void cListFile::handle_start_directive(SICCodeLine* code) {
         _start_address = _current_address =
             hex_to_int((char*)code->operands[0].c_str());
         code->address = _start_address;
+        _blocks_table[_current_block] = _start_address;
         _start_set = true;
         _program_name = code->label;
     }
     else {
         _start_address = _current_address = 0;
+        _blocks_table[_current_block] = 0;
         code->errors.push_back(ERROR_ILLEGAL_START);
     }
 }
@@ -197,6 +162,7 @@ void cListFile::suggest_end_operand(SICCodeLine* code) {
 
 void cListFile::handle_end_directive(SICCodeLine* code) {
     code->address = _current_address;
+    _blocks_table[_current_block] = _current_address;
     _end_address = code->address;
     _end_set = true;
 
@@ -411,7 +377,121 @@ int cListFile::get_value_from_expression(string& operand) {
         if (_symbols_table.count(operand) == 1)
             return get_symbol_value(operand);
     }
+    else if (infix_to_posfix(operand)) {
+        while (!expression.empty()) {
+            cout << expression.front() << endl;
+            expression.pop();
+        }
+    }
+
     return MIN_INT;
+}
+
+bool cListFile::infix_to_posfix(string infix) {
+    /*
+    while (!expression_stack.empty()) {
+        expression_stack.pop();
+    }
+
+    while (!expression.empty()) {
+        expression.pop();
+    }
+
+    expression_child.clear();
+    expression_stack.push('(');
+
+    char current;
+    for (int i = 0, l = infix.size(); i < l; ++i) {
+        current = infix[i];
+
+        if (isspace(current)) {
+
+        }
+
+        else if (isalnum(current) || '.' == current) {
+            expression_child += current;
+        }
+
+        else if ('(' == current) {
+            expression_stack.push(current);
+        }
+
+        else if (is_operator(current)) {
+            while (!expression_stack.empty() &&
+                is_operator(expression_stack.top())
+                && precedence(expression_stack.top(), current)) {
+                expression.emplace(expression_stack.top());
+                expression_stack.pop();
+            }
+
+            expression_stack.push(current);
+        }
+
+        else if (')' == current) {
+            while (!expression_stack.empty() && '(' != expression_stack.top()) {
+                expression.emplace(expression_stack.top());
+                expression_stack.pop();
+            }
+
+            if (expression_stack.empty()) {
+                return false;
+            }
+
+            expression_stack.pop();
+        }
+        else {
+            return false;
+        }
+    }
+
+    while (!expression_stack.empty() && '(' != expression_stack.top()) {
+        expression.emplace(expression_stack.top());
+        expression_stack.pop();
+    }
+
+    if (expression_stack.empty()) {
+        return false;
+    }
+
+    expression_stack.pop();
+
+    if (!expression_stack.empty()) {
+        return false;
+    }
+    */
+    return true;
+}
+
+bool cListFile::is_operator(char current_char) {
+    switch (current_char) {
+    case '+':
+    case '-':
+    case '*':
+    case '/':
+    case '^':
+    case '%':
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool cListFile::precedence(char left, char right)
+{
+    if (left == '^') {
+        return true;
+    }
+    else if (right == '^') {
+        return false;
+    }
+    else if (left == '*' || left == '/' || left == '%') {
+        return true;
+    }
+    else if (right == '*' || right == '/' || right == '%') {
+        return false;
+    }
+
+    return true;
 }
 
 void cListFile::handle_opcodes(SICCodeLine* code) {
@@ -451,9 +531,19 @@ void cListFile::handle_symbol_expression(SICCodeLine* code, SICSymbol* symbol) {
         symbol->address = _symbols_table[code->operands[0]]->address;
         _symbols_table[code->label] = symbol;
     }
+    else if (code->operands[0] == "*") {
+        symbol->address = code->address;
+        _symbols_table[code->label] = symbol;
+    }
     else {
-        code->errors.push_back(ERROR_ILLEGAL_EQU);
-        delete symbol;
+        symbol->address = get_value_from_expression(code->operands[0]);
+        if (symbol->address != MIN_INT) {
+            _symbols_table[code->label] = symbol;
+        }
+        else {
+            code->errors.push_back(ERROR_ILLEGAL_EQU);
+            delete symbol;
+        }
     }
 }
 
@@ -462,10 +552,10 @@ void cListFile::handle_equ_directive(SICCodeLine* code) {
         code->errors.push_back(ERROR_ILLEGAL_EQU);
         return;
     }
-    else if (!is_alpha(code->label)) {
-        code->errors.push_back(ERROR_ILLEGAL_LABEL);
-        return;
-    }
+    //else if (!is_alpha(code->label)) {
+    //    code->errors.push_back(ERROR_ILLEGAL_LABEL);
+    //    return;
+    //}
 
     SICSymbol* symbol = new SICSymbol;
     zero(symbol, sizeof(SICSymbol));
@@ -504,11 +594,28 @@ int cListFile::get_symbol_value(string& key) {
         return _siccode_lines[_symbols_table[key]->address]->address;
 }
 
+void cListFile::handle_use_directive(SICCodeLine* code) {
+    if (!code->operands.size()) {
+        _current_address = _blocks_table[DEFAULT_BLOCK];
+        _current_block = DEFAULT_BLOCK;
+        code->address = _current_address;
+    }
+    else if (code->operands.size() == 1 && is_alpha(code->operands[0])) {
+        _blocks_table[_current_block] = _current_address;
+        _current_address = _blocks_table[code->operands[0]];
+        _current_block = code->operands[0];
+        code->address = _current_address;
+    }
+    else
+        code->errors.push_back(ERROR_ILLEGAL_USE);
+}
+
 bool cListFile::parse_instructions() {
     if (!_siccode_lines.size())
         return false;
 
     _start_address = _current_address = 0;
+    _current_block = DEFAULT_BLOCK;
 
     map<string, SICOpCode*>::iterator opcode_table_it;
     SICCodeLine* siccode_line;
@@ -517,12 +624,11 @@ bool cListFile::parse_instructions() {
     for (int i = 0; i < (int)_siccode_lines.size(); ++i) {
         siccode_line = _siccode_lines[i];
 
-        _current_address += _address_offset;
-
-        if (siccode_line->is_comment) {
-            _current_address -= _address_offset;
+        if (siccode_line->is_comment)
             continue;
-        }
+
+        _current_address += _address_offset;
+        siccode_line->block = _current_block;
 
         /* Handling START Directive */
         if (siccode_line->mnemonic == "START")
@@ -554,10 +660,14 @@ bool cListFile::parse_instructions() {
         else if (siccode_line->mnemonic == "ORG")
             handle_org_directive(siccode_line);
 
+        /* Handling USE Directive */
+        else if (siccode_line->mnemonic == "USE")
+            handle_use_directive(siccode_line);
+
         /* Handling END Directive */
         else if (siccode_line->mnemonic == "END") {
+            i += handle_literal_directive(siccode_line, i - 1);
             handle_end_directive(siccode_line);
-            i += handle_literal_directive(siccode_line, i);
         }
 
         /* Handling LTORG Directive */
@@ -626,6 +736,7 @@ int cListFile::handle_literal_directive(SICCodeLine* code, int index) {
             line->address = _current_address;
             line->is_literal = true;
             line->object_code = literal->object_code;
+            line->block = _current_block;
             _siccode_lines.insert(code_it, line);
 
             _current_address += literal->object_code.size();

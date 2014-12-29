@@ -38,6 +38,45 @@ using namespace std;
 #endif
 #endif
 
+#define zero(o, s) memset(o, 0, s);
+
+#define ERROR_MISSING_OPCODE    "missing operation code"
+#define ERROR_UNRECOG_OPCODE    "unrecognized operation code"
+#define ERROR_ILLEGAL_OPCODE    "illegal operation code format"
+#define ERROR_ILLEGAL_OPCODE_V3 "not a format 4 operation code"
+#define ERROR_MISSING_OPERAND   "missing or misplaced operand in mnemonic"
+#define ERROR_ILLEGAL_OPERAND   "illegal operand in mnemonic"
+#define ERROR_UNDEFINED_SYM     "undefined symbol in operand"
+#define ERROR_MISSING_START     "missing or misplaced start statement"
+#define ERROR_ILLEGAL_START     "illegal operand in start statement"
+#define ERROR_DUPLICATE_START   "duplicate or misplaced start statement"
+#define ERROR_OPERAND_END       "missing or misplaced operand in end statement"
+#define ERROR_AFTER_END         "statement should not follow end statement"
+#define ERROR_OPERAND_WORD      "missing or misplaced operand in word statement"
+#define ERROR_ILLEGAL_WORD      "illegal operand in word statement"
+#define ERROR_OPERAND_RESW      "missing or misplaced operand in resw statement"
+#define ERROR_ILLEGAL_RESW      "illegal operand in resw statement"
+#define ERROR_OPERAND_RESB      "missing or misplaced operand in resb statement"
+#define ERROR_ILLEGAL_RESB      "illegal operand in resb statement"
+#define ERROR_OPERAND_BYTE      "missing or misplaced operand in byte statement"
+#define ERROR_ILLEGAL_BYTE      "illegal operand in byte statement"
+#define ERROR_DUPLICATE_LABEL   "duplicate label definition"
+#define ERROR_ILLEGAL_LABEL     "illegal format in label field"
+#define ERROR_SUGGEST           "do you mean"
+#define ERROR_ILLEGAL_INDIRECT  "illegal indirect operand"
+#define ERROR_ILLEGAL_BASE      "illegal operand in base statement"
+#define ERROR_ILLEGAL_LITERAL   "illegal operand in literal statement"
+#define ERROR_ILLEGAL_EQU		"illegal equ statement"
+#define ERROR_ILLEGAL_ORG		"illegal org statement"
+#define ERROR_ILLEGAL_USE		"illegal use statement"
+
+#define BYTE_INSTRUCTION_INVALID	0x00
+#define BYTE_INSTRUCTION_HEX		0x01
+#define BYTE_INSTRUCTION_CHAR		0x02
+
+#define MIN_INT         (-2147483647L - 1)
+#define DEFAULT_BLOCK   "default_block"
+
 #define OPCODES_SIZE 59
 static char* opcodes_mnemonic[OPCODES_SIZE] = {
     "ADD",
@@ -204,4 +243,7 @@ struct SICCodeLine {
 
     bool is_variable;
     bool is_literal;
+
+    string block;
 };
+

@@ -46,11 +46,14 @@ void cObjectFile::generate_objectfile() {
     SICCodeLine* siccode_line;
     char t_line_size;
     string _object_line;
+
+    /* Handling Default Block */
     for (int i = 0; i < (int)_siccode_lines.size();) {
         siccode_line = _siccode_lines[i];
         _object_line.clear();
 
-        if (siccode_line->object_code.size() == 0) {
+        if (siccode_line->object_code.size() == 0 ||
+            siccode_line->block != DEFAULT_BLOCK) {
             ++i;
             continue;
         }
@@ -88,6 +91,55 @@ void cObjectFile::generate_objectfile() {
         _object_line.replace(7, 2, char_to_hex_string(t_line_size / 2));
         _object_line += '\n';
         _object_code += _object_line;
+    }
+
+    /* Handling Other Blocks */
+    for (map<string, int>::iterator j = _blocks_table.begin();
+        j != _blocks_table.end(); ++j) {
+
+        if (j->first == DEFAULT_BLOCK)
+            continue;
+
+        for (int i = 0; i < (int)_siccode_lines.size();) {
+            siccode_line = _siccode_lines[i];
+            _object_line.clear();
+
+            if (siccode_line->object_code.size() == 0 ||
+                siccode_line->block != j->first) {
+                ++i;
+                continue;
+            }
+
+            _object_line += 'T';
+            _object_line += int_to_hex_string(siccode_line->address);
+            _object_line += "00";
+
+            t_line_size = 0;
+            while (i < (int)_siccode_lines.size()) {
+                siccode_line = _siccode_lines[i];
+
+                if (siccode_line->is_comment) {
+                    ++i;
+                    continue;
+                }
+
+                if (siccode_line->object_code.size() == 0) {
+                    ++i;
+                    break;
+                }
+
+                if (t_line_size + (siccode_line->object_code.size() * 2) > 60) {
+                    break;
+                }
+
+                for (int j = 0; j < (int)siccode_line->object_code.size(); ++j) {
+                    _object_line += char_to_hex_string(siccode_line->object_code[j]);
+                }
+
+                t_line_size += siccode_line->object_code.size() * 2;
+                ++i;
+            }
+        }
     }
 
     /* Footer */
@@ -292,11 +344,12 @@ void cObjectFile::generate_object_code() {
             continue;
 
         else if (siccode_line->mnemonic == "EQU") {
-
         }
 
         else if (siccode_line->mnemonic == "ORG") {
+        }
 
+        else if (siccode_line->mnemonic == "USE") {
         }
 
         else {
