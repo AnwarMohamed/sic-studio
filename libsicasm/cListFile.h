@@ -23,6 +23,7 @@
 #include "cSourceFile.h"
 #include <stack>
 #include <queue>
+#include <cctype>
 
 using namespace std;
 
@@ -45,8 +46,8 @@ private:
     bool infix_to_posfix(string infix);
     bool is_operator(char current_char);
     bool precedence(char left, char right);
-    stack<char> expression_stack;
-    queue<string> expression;
+    stack<string> expression_stack;
+    vector<string> expression;
     string expression_child;
 
     bool is_hex_number(string& str);
@@ -58,6 +59,9 @@ private:
     void construct_symbol_table();
     bool parse_instructions();
     string suggest_operation(string operation);
+
+    string compute_postfix(string& first, string& second, string& op);
+    int compute_int(int op1, int op2, char op);
 
     void handle_start_directive(SICCodeLine* code);
     void handle_word_directive(SICCodeLine* code);
@@ -77,9 +81,7 @@ private:
     void handle_opcodes_dual_operands(SICCodeLine* code);
     void handle_indexed_operand(SICCodeLine* code);
     void handle_literal(SICCodeLine* code);
-    void handle_symbol_expression(SICCodeLine* code, SICSymbol* symbol);
-
-    int get_value_from_expression(string& operand);
+    void handle_symbol_expression(SICCodeLine* code, SICSymbol* symbol);    
 
     SICLiteral* generate_hex_literal(SICCodeLine* code);
     SICLiteral* generate_char_literal(SICCodeLine* code);
@@ -107,5 +109,7 @@ protected:
 
     char is_byte_instruction(string& inst);
     int get_symbol_value(string& key);
+
+    int get_value_from_expression(SICCodeLine* code, string& operand);
 };
 

@@ -244,6 +244,8 @@ struct SICCodeLine {
     bool is_variable;
     bool is_literal;
 
+    bool expr_operands;
+
     string block;
 };
 

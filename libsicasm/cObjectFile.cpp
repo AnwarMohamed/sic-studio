@@ -230,8 +230,18 @@ void cObjectFile::handle_opcodes_single_operand(SICCodeLine* code, int index) {
                     address = _literals_table[code->operands[0]]->address;
 
                 else {
+                    if (code->expr_operands) {
+                        address = get_value_from_expression(code, code->operands[0]);
+                        
+                        if (address >= 0xffff || address < 0) {
+                            code->errors.push_back(ERROR_ILLEGAL_OPERAND);
+                            return;
+                        }
 
-                    if (_symbols_table[code->operands[0]]->is_macro &&
+                        if (address > 0x0fff)
+                            code->is_xe4 = true;
+                    }
+                    else if (_symbols_table[code->operands[0]]->is_macro &&
                         !_symbols_table[code->operands[0]]->is_symbolic) {
                         address = _symbols_table[code->operands[0]]->address;
 
@@ -325,7 +335,7 @@ void cObjectFile::generate_object_code() {
 
         else if (siccode_line->mnemonic == "WORD")
             append_object_code(siccode_line->object_code,
-            str_to_int((char*)siccode_line->operands[0].c_str()));
+            get_value_from_expression(siccode_line, siccode_line->operands[0]));
 
         else if (siccode_line->mnemonic == "RESW" ||
             siccode_line->mnemonic == "RESB" ||
@@ -367,6 +377,11 @@ void cObjectFile::generate_object_code() {
                 handle_opcodes_dual_operands(siccode_line);
                 break;
             }
+        }
+
+        if (siccode_line->errors.size()) {
+            is_ready = false;
+            break;
         }
     }
 }

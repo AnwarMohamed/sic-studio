@@ -94,7 +94,8 @@ void cListFile::handle_word_directive(SICCodeLine* code) {
     _current_address += 3;
 
     if (code->operands.size() != 1 ||
-        !is_word_str(code->operands[0])) {
+        get_value_from_expression(code, code->operands[0]) >= 0xffff ||
+        get_value_from_expression(code, code->operands[0]) < 0) {
         code->errors.push_back(ERROR_ILLEGAL_WORD);
     }
 }
@@ -123,13 +124,13 @@ void cListFile::handle_resb_directive(SICCodeLine* code) {
     code->address = _current_address;
 
     if (code->operands.size() != 1 ||
-        !is_word_str(code->operands[0])) {
+        get_value_from_expression(code, code->operands[0]) >= 0xffff ||
+        get_value_from_expression(code, code->operands[0]) < 0) {
         code->errors.push_back(ERROR_ILLEGAL_RESB);
         _current_address += 1;
     }
     else {
-        _current_address += str_to_int(
-            (char*)code->operands[0].c_str());
+        _current_address += get_value_from_expression(code, code->operands[0]);
     }
 }
 
@@ -137,13 +138,13 @@ void cListFile::handle_resw_directive(SICCodeLine* code) {
     code->address = _current_address;
 
     if (code->operands.size() != 1 ||
-        !is_word_str(code->operands[0])) {
+        get_value_from_expression(code, code->operands[0]) >= 0xffff ||
+        get_value_from_expression(code, code->operands[0]) < 0) {
         code->errors.push_back(ERROR_ILLEGAL_RESW);
         _current_address += 3;
     }
     else {
-        _current_address += (3 * str_to_int(
-            (char*)code->operands[0].c_str()));
+        _current_address += (3 * get_value_from_expression(code, code->operands[0]));
     }
 }
 
@@ -290,7 +291,8 @@ void cListFile::handle_opcodes_single_operand(SICCodeLine* code) {
         }
         else if (code->operands.size() == 1) {
             if (code->is_xe4) {
-                if (_symbols_table.count(code->operands[0]) != 1)
+                if (get_value_from_expression(code, code->operands[0]) < 0 ||
+                    get_value_from_expression(code, code->operands[0]) >= 0xffff)
                     code->errors.push_back(ERROR_UNDEFINED_SYM);
             }
             else if (is_hex_number(code->operands[0]))
@@ -322,7 +324,8 @@ void cListFile::handle_opcodes_single_operand(SICCodeLine* code) {
             else if (code->operands_t == "=")
                 handle_literal(code);
 
-            else if (_symbols_table.count(code->operands[0]) != 1)
+            else if (get_value_from_expression(code, code->operands[0]) < 0 ||
+                get_value_from_expression(code, code->operands[0]) >= 0xffff)
                 code->errors.push_back(ERROR_UNDEFINED_SYM);
         }
         else
@@ -335,12 +338,12 @@ void cListFile::handle_opcodes_single_operand(SICCodeLine* code) {
 void cListFile::handle_opcodes_dual_operands(SICCodeLine* code) {
     if (code->operands.size() == 2) {
         if ((code->mnemonic == "SHIFTL" || code->mnemonic == "SHIFTR") &&
-            is_register(get_value_from_expression(code->operands[0])) &&
-            is_byte(get_value_from_expression(code->operands[1]))) {
+            is_register(get_value_from_expression(code, code->operands[0])) &&
+            is_byte(get_value_from_expression(code, code->operands[1]))) {
 
         }
-        else if (is_register(get_value_from_expression(code->operands[0])) &&
-            is_register(get_value_from_expression(code->operands[1]))) {
+        else if (is_register(get_value_from_expression(code, code->operands[0])) &&
+            is_register(get_value_from_expression(code, code->operands[1]))) {
 
         }
         else
@@ -369,7 +372,7 @@ bool cListFile::is_register(int number) {
     }
 }
 
-int cListFile::get_value_from_expression(string& operand) {
+int cListFile::get_value_from_expression(SICCodeLine* code, string& operand) {
     if (is_numeric(operand))
         return str_to_int((char*)operand.c_str());
 
@@ -378,27 +381,91 @@ int cListFile::get_value_from_expression(string& operand) {
             return get_symbol_value(operand);
     }
     else if (infix_to_posfix(operand)) {
-        while (!expression.empty()) {
-            cout << expression.front() << endl;
-            expression.pop();
+        for (int i = 0; i < (int)expression.size(); ++i) {
+            if (is_operator(expression[i][0])) {
+
+                string first = expression_stack.top();
+                expression_stack.pop();
+
+                string second = expression_stack.top();
+                expression_stack.pop();
+
+                expression_stack.push(
+                    compute_postfix(first, second, expression[i]));
+
+                if (expression_stack.top() == "null") {
+                    return MIN_INT;
+                }
+            }
+            else {
+                expression_stack.push(expression[i]);
+            }
+        }
+
+        if (expression_stack.top() == "null") {
+            return MIN_INT;
+        }
+        else {
+            int result = str_to_int((char*)expression_stack.top().c_str());
+            if (result >= 0 && result < 0xffff) {
+                code->expr_operands = true;
+                return result;
+            }
         }
     }
 
     return MIN_INT;
 }
 
+int cListFile::compute_int(int op1, int op2, char op)
+{
+    switch (op){
+    case '+':
+        return op2 + op1;
+    case '-':
+        return op2 - op1;
+    case '*':
+        return op2 * op1;
+    case '/':
+        return op2 / op1;
+    }
+
+    return MIN_INT;
+}
+
+string cListFile::compute_postfix(string& first, string& second, string& op) {
+    int first_int = 0, second_int = 0;
+    
+    if (is_numeric(first)) {
+        first_int = str_to_int((char*)first.c_str());
+    }
+    else if (_symbols_table.count(first) == 1) {
+        first_int += _siccode_lines[_symbols_table[first]->address]->address;
+    }
+    else
+        return "null";
+    
+    if (is_numeric(second)) {
+        second_int += str_to_int((char*)second.c_str());
+    }
+    else if (_symbols_table.count(second) == 1) {
+        second_int += _siccode_lines[_symbols_table[second]->address]->address;
+    }
+    else
+        return "null";
+
+    return std::to_string(compute_int(first_int, second_int, op[0]));
+}
+
 bool cListFile::infix_to_posfix(string infix) {
-    /*
+
     while (!expression_stack.empty()) {
         expression_stack.pop();
     }
 
-    while (!expression.empty()) {
-        expression.pop();
-    }
-
+    expression.clear();
     expression_child.clear();
-    expression_stack.push('(');
+    expression_stack.push("(");
 
     char current;
     for (int i = 0, l = infix.size(); i < l; ++i) {
@@ -408,28 +475,50 @@ bool cListFile::infix_to_posfix(string infix) {
 
         }
 
-        else if (isalnum(current) || '.' == current) {
+        else if (isalnum(current)) {
             expression_child += current;
         }
 
-        else if ('(' == current) {
-            expression_stack.push(current);
+        else if (current == '(') {
+            if (expression_child.size()) {
+                expression.push_back(expression_child);
+                expression_child.clear();
+            }
+
+            expression_stack.push(string(1, current));
         }
 
         else if (is_operator(current)) {
+            if (expression_child.size()) {
+                expression.push_back(expression_child);
+                expression_child.clear();
+            }
+
             while (!expression_stack.empty() &&
-                is_operator(expression_stack.top())
-                && precedence(expression_stack.top(), current)) {
-                expression.emplace(expression_stack.top());
+                is_operator(expression_stack.top()[0])
+                && precedence(expression_stack.top()[0], current)) {
+
+                expression.push_back(expression_stack.top());
                 expression_stack.pop();
             }
 
-            expression_stack.push(current);
+            expression_stack.push(string(1, current));
         }
 
         else if (')' == current) {
-            while (!expression_stack.empty() && '(' != expression_stack.top()) {
-                expression.emplace(expression_stack.top());
+            if (expression_child.size()) {
+                expression.push_back(expression_child);
+                expression_child.clear();
+            }
+
+            while (!expression_stack.empty() && "(" != expression_stack.top()) {
+
+                if (expression_child.size()) {
+                    expression_stack.push(expression_child);
+                    expression_child.clear();
+                }
+
+                expression.push_back(expression_stack.top());
                 expression_stack.pop();
             }
 
@@ -444,8 +533,14 @@ bool cListFile::infix_to_posfix(string infix) {
         }
     }
 
-    while (!expression_stack.empty() && '(' != expression_stack.top()) {
-        expression.emplace(expression_stack.top());
+    while (!expression_stack.empty() && "(" != expression_stack.top()) {
+
+        if (expression_child.size()) {
+            expression_stack.push(expression_child);
+            expression_child.clear();
+        }
+
+        expression.push_back(expression_stack.top());
         expression_stack.pop();
     }
 
@@ -458,7 +553,7 @@ bool cListFile::infix_to_posfix(string infix) {
     if (!expression_stack.empty()) {
         return false;
     }
-    */
+
     return true;
 }
 
@@ -536,7 +631,7 @@ void cListFile::handle_symbol_expression(SICCodeLine* code, SICSymbol* symbol) {
         _symbols_table[code->label] = symbol;
     }
     else {
-        symbol->address = get_value_from_expression(code->operands[0]);
+        symbol->address = get_value_from_expression(code, code->operands[0]);
         if (symbol->address != MIN_INT) {
             _symbols_table[code->label] = symbol;
         }
@@ -571,9 +666,10 @@ void cListFile::handle_org_directive(SICCodeLine* code) {
         code->address = _current_address;
     }
     else if (code->operands.size() == 1 &&
-        get_value_from_expression(code->operands[0]) >= 0) {
+        get_value_from_expression(code, code->operands[0]) >= 0 &&
+        get_value_from_expression(code, code->operands[0]) < 0xffff) {
         _current_address -= _address_offset;
-        _address_offset = get_value_from_expression(code->operands[0]);
+        _address_offset = get_value_from_expression(code, code->operands[0]);
 
         if (_address_offset != MIN_INT) {
             _address_offset -= _current_address;
